@@ -1,31 +1,19 @@
 {% extends "base.html" %}
-
-{% block title %}Upload Documents | SmartDispute.ai Canada{% endblock %}
-
 {% block content %}
-<div class="container">
-    <h2 class="mb-4">Upload Your Documents</h2>
-    <p class="mb-4">Your documents will be analyzed using Canadian legal databases and AI to generate court-ready forms.</p>
-
-    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-        <div class="mb-3">
-            <label for="case_type" class="form-label">Case Type</label>
-            <select class="form-select" id="case_type" name="case_type" required>
-                <option selected disabled value="">Choose...</option>
-                <option value="tenant">Landlord-Tenant Dispute</option>
-                <option value="credit">Credit Report Error</option>
-                <option value="human_rights">Human Rights Complaint</option>
-                <option value="small_claims">Small Claims Issue</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label for="document" class="form-label">Upload File</label>
-            <input class="form-control" type="file" id="document" name="document" required>
-            <div class="form-text">Accepted formats: PDF, DOCX, PNG, JPG</div>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Analyze My Case</button>
-    </form>
-</div>
+<h2>Upload Evidence</h2>
+<form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="case_id" class="form-label">Select Case</label>
+        <select name="case_id" class="form-select" required>
+            {% for case in cases %}
+            <option value="{{ case.id }}">{{ case.title }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <input type="file" name="document" class="form-control" required>
+    </div>
+    <input type="text" name="tag" class="form-control mb-3" placeholder="Tag or short note (optional)">
+    <button type="submit" class="btn btn-primary">Upload Evidence</button>
+</form>
 {% endblock %}
