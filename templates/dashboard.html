@@ -1,0 +1,56 @@
+{% extends 'base.html' %} {% block title %}Dashboard | SmartDispute.ai{% endblock %} {% block content %}
+My Legal Cases
+New Case
+{% if cases %}
+{% for case in cases %}
+{{ case.title }}
+{% if case.merit_score %}
+{{ (case.merit_score * 100) | round | int }}% Merit
+{% endif %}
+{{ case.created_at.strftime('%b %d, %Y') }}
+{{ case.category }}
+Status: {{ case.status | replace('_', ' ') | title }}
+Documents: {{ case.documents | length }}
+Analyze Generate 
+{% endfor %}
+{% else %}
+
+No cases yet
+Upload documents to start a new legal case
+Upload Documents
+{% endif %} {% if cases %}
+Recent Activity
+{% for case in cases[:5] %}
+{% if loop.index == 1 %} {% elif loop.index == 2 %} {% elif loop.index == 3 %} {% else %} {% endif %}
+{% if loop.index == 1 %}
+Document Generated
+Generated a new legal form for {{ case.title }}
+{% elif loop.index == 2 %}
+Case Analyzed
+Legal analysis completed for {{ case.title }}
+{% elif loop.index == 3 %}
+Documents Uploaded
+New documents added to {{ case.title }}
+{% else %}
+Case Created
+Started a new case: {{ case.title }}
+{% endif %}
+{{ case.updated_at.strftime('%b %d, %Y') }}
+{% endfor %}
+{% endif %}
+Subscription Status
+{% if current_user.subscription_type == 'free' %}
+Free
+{% elif current_user.subscription_type == 'pay_per_doc' %}
+Pay Per Document
+{% elif current_user.subscription_type == 'unlimited' %}
+Unlimited
+{% elif current_user.subscription_type == 'low_income' %}
+Low Income
+{% endif %}
+{{ current_user.subscription_type | replace('_', ' ') | title }} Plan
+{% if current_user.subscription_type != 'free' and current_user.subscription_end %}
+Expires on {{ current_user.subscription_end.strftime('%B %d, %Y') }}
+{% endif %}
+{% if current_user.subscription_type == 'free' %} Upgrade Plan {% else %} Change Plan {% endif %}
+{% endblock %}
