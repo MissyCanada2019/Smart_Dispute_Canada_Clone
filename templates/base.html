@@ -1,26 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}SmartDispute.ai Canada{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartDispute.ai Canada{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body class="bg-dark text-white">
 
-  <header>
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="SmartDispute Logo" style="max-width: 120px; margin-top: 10px;">
-    <h1>SmartDispute.ai Canada</h1>
-    <p>Justice Engine for Everyday Canadians</p>
-  </header>
+    <header class="bg-danger py-3">
+        <div class="container text-center">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="SmartDispute.ai Logo" style="max-height: 80px;">
+            <h1 class="mt-2">SmartDispute.ai <span class="text-white">Canada</span></h1>
+            <p class="lead">Justice Engine for Everyday Canadians</p>
+        </div>
+    </header>
 
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+    <main class="container my-5">
+        {% block content %}
+        {% endblock %}
+    </main>
 
-  <footer>
-    <p>&copy; 2025 SmartDispute.ai Canada — All rights reserved.</p>
-  </footer>
+    <footer class="bg-danger text-center py-3">
+        <p class="mb-0">&copy; 2025 SmartDispute.ai Canada — All rights reserved.</p>
+    </footer>
 
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block scripts %}
+    {% endblock %}
 </body>
 </html>
