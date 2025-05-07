@@ -1,56 +1,21 @@
-{% extends 'base.html' %} {% block title %}Dashboard | SmartDispute.ai{% endblock %} {% block content %}
-My Legal Cases
-New Case
-{% if cases %}
-{% for case in cases %}
-{{ case.title }}
-{% if case.merit_score %}
-{{ (case.merit_score * 100) | round | int }}% Merit
-{% endif %}
-{{ case.created_at.strftime('%b %d, %Y') }}
-{{ case.category }}
-Status: {{ case.status | replace('_', ' ') | title }}
-Documents: {{ case.documents | length }}
-Analyze Generate 
-{% endfor %}
-{% else %}
+<h2>Your Cases</h2>
+{% for case in current_user.cases %}
+    <div class="card mb-4">
+        <div class="card-body bg-dark text-white">
+            <h5 class="card-title">{{ case.title }}</h5>
+            <p class="card-text">{{ case.description or "No description" }}</p>
 
-No cases yet
-Upload documents to start a new legal case
-Upload Documents
-{% endif %} {% if cases %}
-Recent Activity
-{% for case in cases[:5] %}
-{% if loop.index == 1 %} {% elif loop.index == 2 %} {% elif loop.index == 3 %} {% else %} {% endif %}
-{% if loop.index == 1 %}
-Document Generated
-Generated a new legal form for {{ case.title }}
-{% elif loop.index == 2 %}
-Case Analyzed
-Legal analysis completed for {{ case.title }}
-{% elif loop.index == 3 %}
-Documents Uploaded
-New documents added to {{ case.title }}
-{% else %}
-Case Created
-Started a new case: {{ case.title }}
-{% endif %}
-{{ case.updated_at.strftime('%b %d, %Y') }}
+            <h6>Evidence:</h6>
+            <ul class="list-group list-group-flush mb-3">
+                {% for ev in case.evidence %}
+                <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
+                    {{ ev.filename }} {% if ev.tag %}<small class="text-muted">({{ ev.tag }})</small>{% endif %}
+                    <a href="{{ url_for('static', filename=ev.file_path) }}" class="btn btn-sm btn-outline-light" download>Download</a>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <a href="{{ url_for('generate_legal_package', case_id=case.id) }}" class="btn btn-danger">Generate Legal Package</a>
+        </div>
+    </div>
 {% endfor %}
-{% endif %}
-Subscription Status
-{% if current_user.subscription_type == 'free' %}
-Free
-{% elif current_user.subscription_type == 'pay_per_doc' %}
-Pay Per Document
-{% elif current_user.subscription_type == 'unlimited' %}
-Unlimited
-{% elif current_user.subscription_type == 'low_income' %}
-Low Income
-{% endif %}
-{{ current_user.subscription_type | replace('_', ' ') | title }} Plan
-{% if current_user.subscription_type != 'free' and current_user.subscription_end %}
-Expires on {{ current_user.subscription_end.strftime('%B %d, %Y') }}
-{% endif %}
-{% if current_user.subscription_type == 'free' %} Upgrade Plan {% else %} Change Plan {% endif %}
-{% endblock %}
