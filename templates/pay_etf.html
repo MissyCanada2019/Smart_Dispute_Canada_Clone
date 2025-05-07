@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Complete Payment | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class
+
+Got it — for now we'll go live with **e-transfer only** and keep PayPal integration as a future add-on.
+
+Next steps I recommend:
+
+1. Finalize `pay_etf.html` template (I’ll finish that now)  
+2. Add an admin-side check for marking cases “paid” after you confirm the e-transfer  
+3. Add a visual badge or status on the dashboard to show “Payment Pending” vs “Paid”
+
+Here’s the rest of your `pay_etf.html`:
+
+---
+
+### ✅ `templates/pay_etf.html` (Complete)
+
+```html
+{% extends "base.html" %}
+{% block title %}Complete Payment | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Finish Your Payment</h2>
+    <p class="lead">You're just one step away from generating your legal package for:</p>
+    <h4 class="text-info">{{ case.title }}</h4>
+
+    <hr>
+
+    <p>Please send an e-transfer of <strong>$5.99 CAD</strong> to:</p>
+    <h5><strong>smartdisputecanada@gmail.com</strong></h5>
+
+    <p>Include your <strong>Case ID: {{ case.id }}</strong> or your full name in the message.</p>
+
+    <div class="alert alert-info mt-4">
+        Once we confirm the payment, your legal package will be unlocked automatically.
+    </div>
+
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+{% endblock %}
