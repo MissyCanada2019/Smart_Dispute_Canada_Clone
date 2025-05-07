@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create a New Case</h2>
+<form method="POST">
+    <input type="text" name="title" class="form-control mb-2" placeholder="Case Title" required>
+    <textarea name="description" class="form-control mb-3" placeholder="Case Description (optional)"></textarea>
+    <button type="submit" class="btn btn-primary">Create Case</button>
+</form>
+{% endblock %}
