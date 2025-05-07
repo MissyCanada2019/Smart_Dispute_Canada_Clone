@@ -108,3 +108,44 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
+    @app.route("/create-case", methods=["GET", "POST"])
+@login_required
+def create_case():
+    if request.method == "POST":
+        title = request.form["title"]
+        description = request.form.get("description")
+
+        new_case = Case(user_id=current_user.id, title=title, description=description)
+        db.session.add(new_case)
+        db.session.commit()
+        flash("Case created successfully!", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("create_case.html")
+    @app.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload():
+    cases = Case.query.filter_by(user_id=current_user.id).all()
+    if request.method == "POST":
+        uploaded_file = request.files["document"]
+        case_id = request.form["case_id"]
+        tag = request.form.get("tag", "")
+        if uploaded_file:
+            filename = secure_filename(uploaded_file.filename)
+            upload_path = os.path.join("uploads", filename)
+            uploaded_file.save(upload_path)
+
+            new_evidence = Evidence(
+                user_id=current_user.id,
+                case_id=case_id,
+                filename=filename,
+                file_path=upload_path,
+                tag=tag
+            )
+            db.session.add(new_evidence)
+            db.session.commit()
+
+            flash("Evidence uploaded successfully.", "success")
+            return redirect(url_for("dashboard"))
+
+    return render_template("upload.html", cases=cases)
