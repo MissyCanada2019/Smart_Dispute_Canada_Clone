@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">My Legal Cases</h1>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">
+            <i class="feather-plus-circle me-2"></i> New Case
+        </a>
+    </div>
+
+    {% if cases %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for case in cases %}
+                <div class="col">
+                    <div class="card h-100 bg-dark">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5 class="card-title mb-0">{{ case.title }}</h5>
+                                {% if case.merit_score %}
+                                    <div class="badge {% if case.merit_score >= 0.7 %}bg-success{% elif case.merit_score >= 0.4 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ (case.merit_score * 100) | round | int }}% Merit
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex text-muted small mb-3">
+                                <div class="me-3">
+                                    <i class="feather-calendar me-1"></i> {{ case.created_at.strftime('%b %d, %Y') }}
+                                </div>
+                                <div>
+                                    <i class="feather-tag me-1"></i> {{ case.category }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-muted small mb-2">
+                                    <span>Status:</span>
+                                    <span class="badge {% if case.status == 'completed' %}bg-success{% else %}bg-info{% endif %}">
+                                        {{ case.status | replace('_', ' ') | title }}
+                                    </span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Documents:</span>
+                                    <span>{{ case.documents | length }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex">
+                                    <a href="{{ url_for('analyze', case_id=case.id) }}" class="btn btn-sm btn-outline-primary me-2">
+                                        <i class="feather-search"></i> Analyze
+                                    </a>
+                                    <a href="{{ url_for('generate', case_id=case.id) }}" class="btn btn-sm btn-outline-primary me-2">
+                                        <i class="feather-file-text"></i> Generate
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-secondary ms-auto" title="More options">
+                                        <i class="feather-more-vertical"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card bg-dark py-5">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="feather-folder text-primary" style="font-size: 4rem;"></i>
+                </div>
+                <h3>No cases yet</h3>
+                <p class="text-muted mb-4">Upload documents to start a new legal case</p>
+                <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                    <i class="feather-upload me-2"></i> Upload Documents
+                </a>
+            </div>
+        </div>
+    {% endif %}
+    
+    {% if cases %}
+        <!-- Recent Activity Section -->
+        <div class="mt-5">
+            <h3 class="mb-4">Recent Activity</h3>
+            <div class="card bg-dark">
+                <div class="list-group list-group-flush">
+                    {% for case in cases[:5] %}
+                        <div class="list-group-item bg-dark">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% if loop.index == 1 %}
+                                        <i class="feather-file-text text-primary fs-3"></i>
+                                    {% elif loop.index == 2 %}
+                                        <i class="feather-search text-info fs-3"></i>
+                                    {% elif loop.index == 3 %}
+                                        <i class="feather-check-circle text-success fs-3"></i>
+                                    {% else %}
+                                        <i class="feather-clock text-secondary fs-3"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {% if loop.index == 1 %}
+                                        <div class="fw-bold">Document Generated</div>
+                                        <p class="text-muted mb-0 small">Generated a new legal form for <strong>{{ case.title }}</strong></p>
+                                    {% elif loop.index == 2 %}
+                                        <div class="fw-bold">Case Analyzed</div>
+                                        <p class="text-muted mb-0 small">Legal analysis completed for <strong>{{ case.title }}</strong></p>
+                                    {% elif loop.index == 3 %}
+                                        <div class="fw-bold">Documents Uploaded</div>
+                                        <p class="text-muted mb-0 small">New documents added to <strong>{{ case.title }}</strong></p>
+                                    {% else %}
+                                        <div class="fw-bold">Case Created</div>
+                                        <p class="text-muted mb-0 small">Started a new case: <strong>{{ case.title }}</strong></p>
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted small ms-auto">{{ case.updated_at.strftime('%b %d, %Y') }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Subscription Status -->
+    <div class="mt-5">
+        <h3 class="mb-4">Subscription Status</h3>
+        <div class="card bg-dark">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                {% if current_user.subscription_type == 'free' %}
+                                    <div class="badge bg-secondary p-2 fs-6">Free</div>
+                                {% elif current_user.subscription_type == 'pay_per_doc' %}
+                                    <div class="badge bg-info p-2 fs-6">Pay Per Document</div>
+                                {% elif current_user.subscription_type == 'unlimited' %}
+                                    <div class="badge bg-primary p-2 fs-6">Unlimited</div>
+                                {% elif current_user.subscription_type == 'low_income' %}
+                                    <div class="badge bg-success p-2 fs-6">Low Income</div>
+                                {% endif %}
+                            </div>
+                            <h5 class="mb-0">{{ current_user.subscription_type | replace('_', ' ') | title }} Plan</h5>
+                        </div>
+                        
+                        {% if current_user.subscription_type != 'free' and current_user.subscription_end %}
+                            <p class="text-muted mb-0">
+                                <i class="feather-calendar me-2"></i>
+                                Expires on {{ current_user.subscription_end.strftime('%B %d, %Y') }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        {% if current_user.subscription_type == 'free' %}
+                            <a href="{{ url_for('pricing') }}" class="btn btn-primary">Upgrade Plan</a>
+                        {% else %}
+                            <a href="{{ url_for('pricing') }}" class="btn btn-outline-primary">Change Plan</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

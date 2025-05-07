@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Login | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card bg-dark shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h1 class="h3">Welcome Back</h1>
+                    <p class="text-muted">Sign in to access your legal cases</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="feather-mail"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="password" class="form-label">Password</label>
+                            <a href="#" class="small">Forgot password?</a>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="feather-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">Remember me</label>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
+                    </div>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p>Don't have an account? <a href="{{ url_for('register') }}">Create one</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

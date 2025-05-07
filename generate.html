@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Legal Documents | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">My Cases</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('analyze', case_id=case.id) }}">Case Analysis</a></li>
+            <li class="breadcrumb-item active">Generate Documents</li>
+        </ol>
+    </nav>
+    <h1>Generate Legal Documents</h1>
+    <p class="text-muted">Case: {{ case.title }} • Category: {{ case.category.replace('-', ' ').title() }}</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card bg-dark shadow mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Select Document Type</h4>
+            </div>
+            <div class="card-body">
+                <form id="documentForm" action="{{ url_for('generate', case_id=case.id) }}" method="post">
+                    <!-- Form type selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Document Type</label>
+                        
+                        {% if recommended_forms %}
+                            <div class="row">
+                                {% for form in recommended_forms %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 form-select-card {% if request.args.get('form') == form.id %}border-primary{% endif %}">
+                                            <div class="card-body">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="form_type" 
+                                                        id="form_{{ loop.index }}" value="{{ form.id }}"
+                                                        {% if request.args.get('form') == form.id %}checked{% endif %}
+                                                        required>
+                                                    <label class="form-check-label w-100" for="form_{{ loop.index }}">
+                                                        <h5 class="mb-2">{{ form.name }}</h5>
+                                                        <p class="text-muted small mb-0">{{ form.description }}</p>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                No recommended forms available for this case type. Please <a href="{{ url_for('chat') }}">contact our AI assistant</a> for help.
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Form fields container - will be populated dynamically -->
+                    <div id="formFields" class="mb-4">
+                        <!-- Common fields for all form types -->
+                        <h5 class="mb-3">Your Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="fullName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" name="full_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="address" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="address" name="address" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="province" class="form-label">Province</label>
+                                <select class="form-select" id="province" name="province" required>
+                                    <option value="" selected disabled>Select...</option>
+                                    <option value="AB">Alberta</option>
+                                    <option value="BC">British Columbia</option>
+                                    <option value="MB">Manitoba</option>
+                                    <option value="NB">New Brunswick</option>
+                                    <option value="NL">Newfoundland and Labrador</option>
+                                    <option value="NS">Nova Scotia</option>
+                                    <option value="NT">Northwest Territories</option>
+                                    <option value="NU">Nunavut</option>
+                                    <option value="ON">Ontario</option>
+                                    <option value="PE">Prince Edward Island</option>
+                                    <option value="QC">Quebec</option>
+                                    <option value="SK">Saskatchewan</option>
+                                    <option value="YT">Yukon</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="postalCode" class="form-label">Postal Code</label>
+                                <input type="text" class="form-control" id="postalCode" name="postal_code" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                        
+                        <!-- Form-specific fields will be loaded here based on form type -->
+                        <div id="dynamicFields"></div>
+                    </div>
+                    
+                    <!-- Submit button -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="feather-file-text me-2"></i> Generate Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-dark shadow mb-4 sticky-top" style="top: 20px;">
+            <div class="card-header">
+                <h4 class="mb-0">Document Information</h4>
+            </div>
+            <div class="card-body">
+                <div id="formInfo">
+                    <p class="text-muted">Select a document type to see more information.</p>
+                </div>
+                
+                <hr>
+                
+                <h5>Tips for Effective Documents</h5>
+                <ul class="text-muted small">
+                    <li>Be concise and factual in your descriptions</li>
+                    <li>Include specific dates and names where relevant</li>
+                    <li>Focus on the facts rather than emotions</li>
+                    <li>Reference any evidence you've uploaded</li>
+                    <li>Avoid legal jargon unless you're certain of its meaning</li>
+                </ul>
+                
+                <div class="alert alert-info mt-4">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="feather-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h6>Need Guidance?</h6>
+                            <p class="mb-0 small">Our AI assistant can help you complete this form correctly.</p>
+                            <a href="{{ url_for('chat', case_id=case.id) }}" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="feather-message-circle me-1"></i> Chat with AI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form selection logic
+        const formRadios = document.querySelectorAll('input[name="form_type"]');
+        const formInfo = document.getElementById('formInfo');
+        const dynamicFields = document.getElementById('dynamicFields');
+        
+        // Form card selection styling
+        const formCards = document.querySelectorAll('.form-select-card');
+        formCards.forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            
+            card.addEventListener('click', function() {
+                radio.checked = true;
+                
+                // Update card styling
+                formCards.forEach(c => c.classList.remove('border-primary'));
+                card.classList.add('border-primary');
+                
+                // Trigger form type change
+                updateFormFields(radio.value);
+            });
+        });
+        
+        // Initial form selection if any
+        formRadios.forEach(radio => {
+            if (radio.checked) {
+                updateFormFields(radio.value);
+            }
+            
+            radio.addEventListener('change', function() {
+                updateFormFields(this.value);
+            });
+        });
+        
+        // Dynamic form field generation based on form type
+        function updateFormFields(formType) {
+            // Reset dynamic fields
+            formInfo.innerHTML = '';
+            
+            // Get form details based on form type
+            const formDetails = getFormDetails(formType);
+            
+            // Update form info panel
+            formInfo.innerHTML = `
+                <h5>${formDetails.name}</h5>
+                <p>${formDetails.description}</p>
+                
+                <h6 class="mt-4">Common Uses</h6>
+                <ul class="text-muted small">
+                    ${formDetails.uses.map(use => `<li>${use}</li>`).join('')}
+                </ul>
+                
+                <h6 class="mt-4">Timeline</h6>
+                <p class="text-muted small">${formDetails.timeline}</p>
+            `;
+            
+            // Add dynamic fields based on form type
+            updateDynamicFields(formType, formDetails);
+        }
+        
+        function updateDynamicFields(formType, formDetails) {
+            // Clear previous fields
+            dynamicFields.innerHTML = '';
+            
+            // Add form-specific fields based on category
+            if (formType.includes('landlord-tenant')) {
+                dynamicFields.innerHTML = `
+                    <h5 class="mt-4 mb-3">Landlord Information</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="landlordName" class="form-label">Landlord/Property Manager Name</label>
+                            <input type="text" class="form-control" id="landlordName" name="landlord_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="landlordAddress" class="form-label">Landlord Address</label>
+                            <input type="text" class="form-control" id="landlordAddress" name="landlord_address" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="rentalAddress" class="form-label">Rental Unit Address</label>
+                            <input type="text" class="form-control" id="rentalAddress" name="rental_address" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="leaseStart" class="form-label">Lease Start Date</label>
+                            <input type="date" class="form-control" id="leaseStart" name="lease_start" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="issueDescription" class="form-label">Describe the Issue</label>
+                        <textarea class="form-control" id="issueDescription" name="issue_description" rows="4" required
+                            placeholder="Provide details about the issue with your rental unit..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="requestedRemedy" class="form-label">What remedy are you seeking?</label>
+                        <textarea class="form-control" id="requestedRemedy" name="requested_remedy" rows="3" required
+                            placeholder="What would resolve this issue? (e.g., repairs, rent abatement, etc.)"></textarea>
+                    </div>
+                `;
+            } else if (formType.includes('credit')) {
+                dynamicFields.innerHTML = `
+                    <h5 class="mt-4 mb-3">Credit Report Information</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="creditBureau" class="form-label">Credit Bureau</label>
+                            <select class="form-select" id="creditBureau" name="credit_bureau" required>
+                                <option value="" selected disabled>Select...</option>
+                                <option value="Equifax">Equifax</option>
+                                <option value="TransUnion">TransUnion</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reportDate" class="form-label">Credit Report Date</label>
+                            <input type="date" class="form-control" id="reportDate" name="report_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="disputedItems" class="form-label">List the items you are disputing</label>
+                        <textarea class="form-control" id="disputedItems" name="disputed_items" rows="4" required
+                            placeholder="Provide details of each item on your credit report that is incorrect..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="disputeReason" class="form-label">Reason for Dispute</label>
+                        <select class="form-select" id="disputeReason" name="dispute_reason" required>
+                            <option value="" selected disabled>Select...</option>
+                            <option value="Not my account">Not my account</option>
+                            <option value="Account closed">Account closed</option>
+                            <option value="Never late on payments">Never late on payments</option>
+                            <option value="Incorrect balance">Incorrect balance</option>
+                            <option value="Paid in full">Paid in full</option>
+                            <option value="Identity theft">Identity theft</option>
+                            <option value="Other">Other (explain below)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="additionalInfo" class="form-label">Additional Information</label>
+                        <textarea class="form-control" id="additionalInfo" name="additional_info" rows="3"
+                            placeholder="Provide any additional details that support your dispute..."></textarea>
+                    </div>
+                `;
+            } else if (formType.includes('human-rights')) {
+                dynamicFields.innerHTML = `
+                    <h5 class="mt-4 mb-3">Human Rights Complaint Information</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="respondentName" class="form-label">Respondent Name (Organization/Person)</label>
+                            <input type="text" class="form-control" id="respondentName" name="respondent_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="respondentAddress" class="form-label">Respondent Address</label>
+                            <input type="text" class="form-control" id="respondentAddress" name="respondent_address" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="discriminationGrounds" class="form-label">Grounds of Discrimination</label>
+                        <select class="form-select" id="discriminationGrounds" name="discrimination_grounds" required multiple>
+                            <option value="Race">Race</option>
+                            <option value="Color">Color</option>
+                            <option value="Ancestry">Ancestry</option>
+                            <option value="Place of Origin">Place of Origin</option>
+                            <option value="Citizenship">Citizenship</option>
+                            <option value="Ethnic Origin">Ethnic Origin</option>
+                            <option value="Disability">Disability</option>
+                            <option value="Creed">Creed</option>
+                            <option value="Sex">Sex</option>
+                            <option value="Sexual Orientation">Sexual Orientation</option>
+                            <option value="Gender Identity">Gender Identity</option>
+                            <option value="Gender Expression">Gender Expression</option>
+                            <option value="Age">Age</option>
+                            <option value="Marital Status">Marital Status</option>
+                            <option value="Family Status">Family Status</option>
+                            <option value="Receipt of Public Assistance">Receipt of Public Assistance</option>
+                        </select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple options</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="discriminationArea" class="form-label">Area of Discrimination</label>
+                        <select class="form-select" id="discriminationArea" name="discrimination_area" required>
+                            <option value="" selected disabled>Select...</option>
+                            <option value="Employment">Employment</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Services">Services, Goods or Facilities</option>
+                            <option value="Contracts">Contracts</option>
+                            <option value="Vocational Associations">Vocational Associations</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="incidentDescription" class="form-label">Description of Discrimination</label>
+                        <textarea class="form-control" id="incidentDescription" name="incident_description" rows="4" required
+                            placeholder="Describe the discriminatory incidents in detail, including dates, what happened, who was involved..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="requestedRemedy" class="form-label">Remedy Sought</label>
+                        <textarea class="form-control" id="requestedRemedy" name="requested_remedy" rows="3" required
+                            placeholder="What would resolve this issue? (e.g., compensation, policy change, accommodation, etc.)"></textarea>
+                    </div>
+                `;
+            } else {
+                // Generic fields for other form types
+                dynamicFields.innerHTML = `
+                    <h5 class="mt-4 mb-3">Case Details</h5>
+                    <div class="mb-3">
+                        <label for="caseDescription" class="form-label">Describe Your Situation</label>
+                        <textarea class="form-control" id="caseDescription" name="case_description" rows="6" required
+                            placeholder="Provide a detailed description of your situation, including relevant dates, names, and facts..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="requestedOutcome" class="form-label">What outcome are you seeking?</label>
+                        <textarea class="form-control" id="requestedOutcome" name="requested_outcome" rows="3" required
+                            placeholder="What would you like to achieve with this legal document?"></textarea>
+                    </div>
+                `;
+            }
+        }
+        
+        // Helper function to get form details based on form type
+        function getFormDetails(formType) {
+            // Form information mapped by type
+            const formDetailsMap = {
+                'landlord-tenant_maintenance_issues': {
+                    name: 'Maintenance Issues Complaint (LTB Form T6)',
+                    description: 'Use this form when your landlord has failed to maintain your rental unit or common areas in a good state of repair.',
+                    uses: [
+                        'Persistent maintenance issues not addressed by landlord',
+                        'Mold or water damage problems',
+                        'Broken appliances or fixtures not being repaired',
+                        'Pest infestations not being treated'
+                    ],
+                    timeline: 'File within one year of when the problem occurred. The Landlord and Tenant Board typically schedules a hearing within 2-3 weeks.'
+                },
+                'landlord-tenant_eviction_defense': {
+                    name: 'Eviction Defense (LTB Form T5)',
+                    description: 'Use this form to contest an eviction notice that you believe was served in bad faith or is otherwise invalid.',
+                    uses: [
+                        'Contesting N4 notices for non-payment of rent',
+                        'Challenging evictions filed after making maintenance requests',
+                        'Disputing renoviction notices',
+                        'Contesting improper notice procedures'
+                    ],
+                    timeline: 'File within 30 days of receiving the eviction notice. Hearings are typically scheduled within 1-2 weeks due to urgency.'
+                },
+                'credit_report_dispute': {
+                    name: 'Credit Report Dispute Letter',
+                    description: 'Use this letter to formally dispute inaccurate information on your credit report with the credit bureau.',
+                    uses: [
+                        'Accounts that don\'t belong to you',
+                        'Incorrect payment history or status',
+                        'Outdated information that should be removed',
+                        'Accounts affected by identity theft'
+                    ],
+                    timeline: 'Credit bureaus must investigate and respond to disputes within 30 days (in some cases 45 days) of receiving your dispute.'
+                },
+                // Add other form types as needed
+                'default': {
+                    name: 'Legal Document',
+                    description: 'Complete the form with your specific case details.',
+                    uses: [
+                        'Presenting your legal issue formally',
+                        'Creating a paper trail of your complaint',
+                        'Initiating legal proceedings'
+                    ],
+                    timeline: 'Timeline varies based on the specific legal issue and jurisdiction.'
+                }
+            };
+            
+            return formDetailsMap[formType] || formDetailsMap['default'];
+        }
+    });
+</script>
+{% endblock %}

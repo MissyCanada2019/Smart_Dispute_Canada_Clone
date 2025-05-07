@@ -1,18 +1,261 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>SmartDispute.ai - Canada's Justice Engine</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-</head>
-<body>
-<header><h1>🍁 SmartDispute.ai 🍁</h1></header>
-<main>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="files" multiple>
-        <button>Upload & Generate</button>
-    </form>
-</main>
-<footer>Powered by Canadians 🍁</footer>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero rounded py-5 px-3 mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold mb-4">Canadian Justice, Accessible to All</h1>
+            <p class="lead mb-4">SmartDispute.ai empowers everyday Canadians to navigate provincial and federal legal systems without expensive lawyers. Upload your evidence, understand your rights, and generate court-ready documents backed by real Canadian law.</p>
+            <div class="d-flex gap-3">
+                <a href="{{ url_for('upload') }}" class="btn btn-primary btn-lg">Start Your Case</a>
+                <a href="{{ url_for('pricing') }}" class="btn btn-outline-light btn-lg">View Pricing</a>
+            </div>
+            <div class="mt-4 d-flex align-items-center">
+                <span class="badge bg-primary me-2">Made in Canada</span>
+                <span class="text-muted small">Designed for Canadian legal systems across all provinces</span>
+            </div>
+        </div>
+        <div class="col-lg-6 mt-4 mt-lg-0 text-center">
+            <div class="position-relative">
+                <svg width="400" height="300" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="img-fluid mb-3">
+                    <!-- Canadian Justice Scales with Maple Leaf -->
+                    <g fill="none" stroke="#e62e2e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3L12 21" />
+                        <path d="M12 3 L2 8 L6 9 L12 6" />
+                        <path d="M12 3 L22 8 L18 9 L12 6" />
+                        <path d="M2 8 L2 11 L7 13 L7 10 L2 8Z" />
+                        <path d="M22 8 L22 11 L17 13 L17 10 L22 8Z" />
+                        <path d="M10 21 L14 21" />
+                    </g>
+                    <!-- Maple Leaf on top -->
+                    <path d="M12 2L10.5 5L8 3.5L7.5 6L5 6.5L7 8.5L5 10L7.5 10.5L8 13L10.5 11.5L12 14.5L13.5 11.5L16 13L16.5 10.5L19 10L17 8.5L19 6.5L16.5 6L16 3.5L13.5 5L12 2Z" fill="#e62e2e" stroke="none" transform="scale(0.5) translate(12, 0)" />
+                </svg>
+                <div class="card bg-dark p-3 shadow-sm">
+                    <div class="d-flex align-items-center border-bottom pb-2 mb-2">
+                        <div class="me-auto">
+                            <h5 class="mb-0">Legal Self-Advocacy</h5>
+                            <small class="text-muted">For Canadians, By Canadians</small>
+                        </div>
+                        <span class="badge bg-primary">AI-Powered</span>
+                    </div>
+                    <div class="text-start text-muted small">
+                        <div class="mb-1">✓ Provincial & Federal Forms</div>
+                        <div class="mb-1">✓ Real Canadian Legal Citations</div>
+                        <div class="mb-1">✓ Privacy-First Approach</div>
+                        <div>✓ Built for All Provinces & Territories</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="mb-5">
+    <h2 class="text-center mb-4">How SmartDispute.ai Works</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 bg-dark border-0 shadow">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="feather-upload-cloud"></i>
+                    </div>
+                    <h3 class="h4">1. Upload Evidence</h3>
+                    <p class="text-muted">Drag and drop your documents, images, and files. Our OCR technology extracts key information automatically.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 bg-dark border-0 shadow">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="feather-search"></i>
+                    </div>
+                    <h3 class="h4">2. AI Analysis</h3>
+                    <p class="text-muted">Our AI analyzes your case, matches to legal precedents, and scores the merit of your claim based on Canadian law.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 bg-dark border-0 shadow">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="feather-file-text"></i>
+                    </div>
+                    <h3 class="h4">3. Generate Documents</h3>
+                    <p class="text-muted">Receive court-ready legal forms, properly formatted and filled with relevant citations and evidence from your case.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Legal Categories Section -->
+<section class="mb-5">
+    <h2 class="text-center mb-4">Legal Issues We Help With</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="col">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="feather-home text-primary me-3 fs-3"></i>
+                        <h3 class="h5 mb-0">Landlord-Tenant Disputes</h3>
+                    </div>
+                    <p class="text-muted">Eviction notices, maintenance issues, illegal rent increases, deposit returns, and tenant rights violations.</p>
+                    <span class="badge bg-secondary">LTB Forms</span>
+                    <span class="badge bg-secondary">RTA Support</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="feather-credit-card text-primary me-3 fs-3"></i>
+                        <h3 class="h5 mb-0">Credit Report Errors</h3>
+                    </div>
+                    <p class="text-muted">Disputes with Equifax and TransUnion, incorrect account information, identity theft issues, and credit repair.</p>
+                    <span class="badge bg-secondary">Credit Bureaus</span>
+                    <span class="badge bg-secondary">Dispute Letters</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="feather-shield text-primary me-3 fs-3"></i>
+                        <h3 class="h5 mb-0">Human Rights Complaints</h3>
+                    </div>
+                    <p class="text-muted">Discrimination based on protected grounds, workplace harassment, accommodation requests, and HRTO applications.</p>
+                    <span class="badge bg-secondary">HRTO</span>
+                    <span class="badge bg-secondary">Accommodation</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="feather-file-text text-primary me-3 fs-3"></i>
+                        <h3 class="h5 mb-0">Small Claims Court</h3>
+                    </div>
+                    <p class="text-muted">Claims under $35,000, contract disputes, unpaid debts, property damage, consumer issues, and civil matters.</p>
+                    <span class="badge bg-secondary">Form 7A</span>
+                    <span class="badge bg-secondary">Defenses</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="feather-users text-primary me-3 fs-3"></i>
+                        <h3 class="h5 mb-0">Child Protection</h3>
+                    </div>
+                    <p class="text-muted">Dealing with Children's Aid Society (CAS), child welfare proceedings, visitation rights, and case responses.</p>
+                    <span class="badge bg-secondary">CAS</span>
+                    <span class="badge bg-secondary">Parent Rights</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 feature-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="feather-alert-circle text-primary me-3 fs-3"></i>
+                        <h3 class="h5 mb-0">Police Misconduct</h3>
+                    </div>
+                    <p class="text-muted">OIPRD complaints, excessive force issues, unlawful searches, detainment disputes, and police accountability.</p>
+                    <span class="badge bg-secondary">OIPRD</span>
+                    <span class="badge bg-secondary">Rights Violations</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="mb-5">
+    <h2 class="text-center mb-4">Why Choose SmartDispute.ai</h2>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="me-3 text-primary">
+                    <i class="feather-check-circle fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="h5">Canadian-Specific Legal Knowledge</h3>
+                    <p class="text-muted">Built specifically for Canadian law with provincial and federal regulations integrated.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="me-3 text-primary">
+                    <i class="feather-check-circle fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="h5">AI-Powered Case Analysis</h3>
+                    <p class="text-muted">Our algorithm scores your case's merit based on precedent and evidence strength.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="me-3 text-primary">
+                    <i class="feather-check-circle fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="h5">Legal Citations & Precedents</h3>
+                    <p class="text-muted">Documents automatically include relevant legal citations from CanLII and other sources.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="me-3 text-primary">
+                    <i class="feather-check-circle fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="h5">Live AI Legal Assistant</h3>
+                    <p class="text-muted">Chat with our AI to understand your rights and get guidance on your specific situation.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="me-3 text-primary">
+                    <i class="feather-check-circle fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="h5">Affordable Access Plans</h3>
+                    <p class="text-muted">Pay-per-document or subscribe for unlimited access, with special rates for low-income users.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="me-3 text-primary">
+                    <i class="feather-check-circle fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="h5">Privacy-First Approach</h3>
+                    <p class="text-muted">Your sensitive documents and personal information are secured with enterprise-grade encryption.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="text-center py-5 rounded bg-dark shadow">
+    <h2 class="mb-4">Ready to Start Your Legal Journey?</h2>
+    <p class="lead mb-4">Join thousands of Canadians who have successfully represented themselves with SmartDispute.ai</p>
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Create Free Account</a>
+        <a href="{{ url_for('upload') }}" class="btn btn-outline-light btn-lg">Upload Documents</a>
+    </div>
+</section>
+{% endblock %}

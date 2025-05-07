@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Preview | SmartDispute.ai{% endblock %}
+
+{% block extra_css %}
+<!-- PDF.js for document preview -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+<style>
+    .citation-card {
+        border-left: 3px solid var(--sd-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">My Cases</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('analyze', case_id=case.id) }}">Case Analysis</a></li>
+            <li class="breadcrumb-item active">Document Preview</li>
+        </ol>
+    </nav>
+    <h1>Document Preview</h1>
+    <p class="text-muted">{{ form.form_type.replace('_', ' ').title() }}</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card bg-dark shadow mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Document Preview</h4>
+                <div class="btn-group">
+                    <button id="zoomIn" class="btn btn-sm btn-outline-light">
+                        <i class="feather-zoom-in"></i>
+                    </button>
+                    <button id="zoomOut" class="btn btn-sm btn-outline-light">
+                        <i class="feather-zoom-out"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- PDF Viewer -->
+                <div id="pdfViewer" class="pdf-viewer"></div>
+                
+                {% if not can_download_clean %}
+                    <div class="alert alert-warning m-3">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="feather-alert-triangle fs-4"></i>
+                            </div>
+                            <div>
+                                <h6>Free Version - Watermarked Document</h6>
+                                <p class="mb-0">This preview contains a watermark. Upgrade your plan or pay per document to remove the watermark.</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ url_for('download', form_id=form.id, version='watermarked') }}" class="btn btn-outline-light me-2">
+                            <i class="feather-download me-1"></i> Download Free (Watermarked)
+                        </a>
+                        
+                        {% if can_download_clean %}
+                            <a href="{{ url_for('download', form_id=form.id, version='clean') }}" class="btn btn-primary">
+                                <i class="feather-download-cloud me-1"></i> Download Clean Version
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('pay_document', form_id=form.id) }}" class="btn btn-primary">
+                                <i class="feather-credit-card me-1"></i> Pay $5.99 for Clean Version
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ url_for('generate', case_id=case.id) }}" class="btn btn-outline-secondary">
+                        <i class="feather-edit-2 me-1"></i> Edit Document
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-dark shadow mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Document Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Document Type:</strong> 
+                    <span class="text-light">{{ form.form_type.replace('_', ' ').title() }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Generated On:</strong> 
+                    <span class="text-light">{{ form.created_at.strftime('%B %d, %Y') }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Status:</strong> 
+                    {% if form.is_paid %}
+                        <span class="badge bg-success">Paid</span>
+                    {% else %}
+                        <span class="badge bg-warning">Watermarked</span>
+                    {% endif %}
+                </div>
+                
+                {% if form.citations and form.citations|length > 0 %}
+                    <hr>
+                    <h5 class="mb-3">Legal Citations Used</h5>
+                    
+                    <div class="list-group">
+                        {% for citation in form.citations %}
+                            <div class="list-group-item citation-card bg-dark border-0 ps-3 mb-3">
+                                <h6 class="mb-1">{{ citation.title }}</h6>
+                                <p class="text-muted small mb-1">{{ citation.citation }}</p>
+                                <p class="small">{{ citation.snippet }}</p>
+                                {% if citation.url %}
+                                    <a href="{{ citation.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        View on CanLII <i class="feather-external-link ms-1"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <hr>
+                
+                <div class="alert alert-info">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="feather-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h6>Next Steps</h6>
+                            <p class="mb-0 small">After downloading your document:</p>
+                            <ol class="small ps-3 mb-0 mt-2">
+                                <li>Review it carefully for accuracy</li>
+                                <li>Sign where indicated</li>
+                                <li>Make required copies</li>
+                                <li>Submit to the appropriate agency</li>
+                            </ol>
+                            <a href="{{ url_for('chat', case_id=case.id) }}" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="feather-help-circle me-1"></i> Get Filing Help
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if not can_download_clean %}
+            <div class="card bg-dark shadow mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Upgrade Options</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex mb-3">
+                        <div class="me-3 text-primary">
+                            <i class="feather-check-circle fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Pay Per Document</h5>
+                            <p class="text-muted mb-0">CA$5.99 for this document only</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="me-3 text-primary">
+                            <i class="feather-check-circle fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Subscription Plans</h5>
+                            <p class="text-muted mb-0">Starting at CA$25/year for unlimited documents</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('pay_document', form_id=form.id) }}" class="btn btn-primary">
+                            <i class="feather-credit-card me-1"></i> Pay for This Document
+                        </a>
+                        <a href="{{ url_for('pricing') }}" class="btn btn-outline-light">
+                            <i class="feather-package me-1"></i> View Subscription Plans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize PDF viewer
+        const pdfViewerContainer = document.getElementById('pdfViewer');
+        const pdfPath = "{{ url_for('download', form_id=form.id, version='watermarked') }}";
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.0;
+        
+        // Initialize PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+        
+        function renderPage(num) {
+            pageRendering = true;
+            
+            // Create canvas container if it doesn't exist
+            let canvasContainer = document.getElementById('pdfCanvasContainer');
+            if (!canvasContainer) {
+                canvasContainer = document.createElement('div');
+                canvasContainer.id = 'pdfCanvasContainer';
+                canvasContainer.style.overflow = 'auto';
+                canvasContainer.style.width = '100%';
+                canvasContainer.style.height = '100%';
+                pdfViewerContainer.appendChild(canvasContainer);
+            }
+            
+            // Create canvas for this page
+            const canvas = document.createElement('canvas');
+            canvas.id = `page-${num}`;
+            canvas.style.display = 'block';
+            canvas.style.margin = '0 auto';
+            
+            // Clear previous pages
+            canvasContainer.innerHTML = '';
+            canvasContainer.appendChild(canvas);
+            
+            // Get page
+            pdfDoc.getPage(num).then(function(page) {
+                // Prepare canvas using PDF page dimensions
+                const viewport = page.getViewport({ scale: scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                // Render PDF page
+                const renderContext = {
+                    canvasContext: canvas.getContext('2d'),
+                    viewport: viewport
+                };
+                
+                const renderTask = page.render(renderContext);
+                
+                // Wait for rendering to finish
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        // New page rendering is pending
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+        }
+        
+        // Load the PDF
+        pdfjsLib.getDocument(pdfPath).promise.then(function(pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            renderPage(pageNum);
+        }).catch(function(error) {
+            console.error('Error loading PDF:', error);
+            pdfViewerContainer.innerHTML = `
+                <div class="alert alert-danger m-3">
+                    <h5>Error loading document</h5>
+                    <p>${error.message || 'Could not load the document. Please try again later.'}</p>
+                </div>
+            `;
+        });
+        
+        // Set up zoom controls
+        document.getElementById('zoomIn').addEventListener('click', function() {
+            scale += 0.2;
+            renderPage(pageNum);
+        });
+        
+        document.getElementById('zoomOut').addEventListener('click', function() {
+            if (scale > 0.4) {
+                scale -= 0.2;
+                renderPage(pageNum);
+            }
+        });
+    });
+</script>
+{% endblock %}

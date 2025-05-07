@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartDispute.ai | AI-Powered Legal Automation for Canadians{% endblock %}</title>
+    
+    <!-- Bootstrap Dark Theme CSS -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    
+    <!-- Feather Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons-web/dist/feather.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                    <svg class="me-2" width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 0L9.5 5.5L5.5 2.5L5 7L1 7.5L4 11L0 14.5L5 15L5.5 19L9.5 17L12 22L14.5 17L18.5 19L19 15L24 14.5L20 11L23 7.5L19 7L18.5 2.5L14.5 5.5L12 0Z" fill="#e62e2e" stroke="none"/>
+                    </svg>
+                    <span class="fs-4">SmartDispute<span class="text-primary">.ai</span></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('index') }}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/pricing' %}active{% endif %}" href="{{ url_for('pricing') }}">Pricing</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/about' %}active{% endif %}" href="{{ url_for('about') }}">About</a>
+                        </li>
+                        {% if current_user.is_authenticated %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">My Cases</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.path == '/upload' %}active{% endif %}" href="{{ url_for('upload') }}">Upload</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if '/chat' in request.path %}active{% endif %}" href="{{ url_for('chat') }}">AI Chat</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.path == '/login' %}active{% endif %}" href="{{ url_for('login') }}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.path == '/register' %}active{% endif %}" href="{{ url_for('register') }}">Register</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-primary" href="{{ url_for('upload') }}">Start Now</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="container my-4">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Main content -->
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <footer class="bg-dark py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-primary mb-3">SmartDispute.ai</h5>
+                    <p class="text-muted">AI-powered legal automation platform making self-advocacy accessible to everyday Canadians.</p>
+                </div>
+                <div class="col-md-2 col-6 mb-4 mb-md-0">
+                    <h6 class="mb-3">Legal Areas</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted">Landlord-Tenant</a></li>
+                        <li><a href="#" class="text-muted">Credit Disputes</a></li>
+                        <li><a href="#" class="text-muted">Human Rights</a></li>
+                        <li><a href="#" class="text-muted">Small Claims</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 col-6 mb-4 mb-md-0">
+                    <h6 class="mb-3">Company</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('about') }}" class="text-muted">About Us</a></li>
+                        <li><a href="{{ url_for('legal_disclaimer') }}" class="text-muted">Legal Disclaimer</a></li>
+                        <li><a href="{{ url_for('privacy_policy') }}" class="text-muted">Privacy Policy</a></li>
+                        <li><a href="#" class="text-muted">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="mb-3">Subscribe to Updates</h6>
+                    <form>
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" placeholder="Your email">
+                            <button class="btn btn-primary" type="button">Subscribe</button>
+                        </div>
+                    </form>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="#" class="text-muted"><i class="feather-twitter"></i></a>
+                        <a href="#" class="text-muted"><i class="feather-facebook"></i></a>
+                        <a href="#" class="text-muted"><i class="feather-instagram"></i></a>
+                        <a href="#" class="text-muted"><i class="feather-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <p class="text-muted m-0">&copy; 2025 SmartDispute.ai. All rights reserved.</p>
+                <p class="text-muted small m-0">Not a substitute for professional legal advice.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Help Button (only show when logged in) -->
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('chat') }}" class="floating-help" title="Need help?">
+            <i class="feather-help-circle"></i>
+        </a>
+    {% endif %}
+    
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mb-4 text-danger mx-auto">
+                <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1 class="display-4 mb-4">Server Error</h1>
+            <p class="lead mb-4">Oops! Something went wrong on our end. Our team has been notified about this issue.</p>
+            <p class="mb-5">Please try again later or contact our support if the problem persists.</p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('index') }}" class="btn btn-primary px-4">Go to Homepage</a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary px-4">Go Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

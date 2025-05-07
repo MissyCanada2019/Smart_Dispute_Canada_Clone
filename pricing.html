@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Pricing | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">Simple, Transparent Pricing</h1>
+        <p class="lead mb-4">Choose the plan that works best for your legal needs</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        <!-- Free Plan -->
+        <div class="col">
+            <div class="pricing-card h-100">
+                <h3 class="h4 mb-3">Free Access</h3>
+                <div class="price text-primary">$0</div>
+                <p class="text-muted mb-4">Basic access to understand your legal options</p>
+                <ul class="list-unstyled mb-4">
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Document upload & storage</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Initial case analysis</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Basic AI legal assistant</li>
+                    <li class="mb-2"><i class="feather-x text-muted me-2"></i> Generated legal documents</li>
+                    <li class="mb-2"><i class="feather-x text-muted me-2"></i> Legal citations</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary d-block">Get Started</a>
+            </div>
+        </div>
+
+        <!-- Pay-Per-Doc Plan -->
+        <div class="col">
+            <div class="pricing-card h-100">
+                <h3 class="h4 mb-3">Pay-Per-Document</h3>
+                <div class="price text-primary">$5.99<small class="fs-6">/doc</small></div>
+                <p class="text-muted mb-4">Perfect for one-time legal matters</p>
+                <ul class="list-unstyled mb-4">
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> All free features</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Court-ready legal documents</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Legal citations included</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Document editing</li>
+                    <li class="mb-2"><i class="feather-x text-muted me-2"></i> Multiple document types</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary d-block">Choose Plan</a>
+            </div>
+        </div>
+
+        <!-- Unlimited Plan -->
+        <div class="col">
+            <div class="pricing-card featured h-100">
+                <div class="badge bg-primary mb-2">Most Popular</div>
+                <h3 class="h4 mb-3">Unlimited Access</h3>
+                <div class="price text-primary">$49.99<small class="fs-6">/month</small></div>
+                <p class="text-muted mb-4">For ongoing legal support needs</p>
+                <ul class="list-unstyled mb-4">
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> All previous features</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Unlimited documents</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Advanced AI legal assistant</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Multiple document revisions</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Priority processing</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-primary d-block">Choose Plan</a>
+            </div>
+        </div>
+
+        <!-- Low-Income Plan -->
+        <div class="col">
+            <div class="pricing-card h-100">
+                <div class="badge bg-info mb-2">Limited Eligibility</div>
+                <h3 class="h4 mb-3">Low-Income Access</h3>
+                <div class="price text-primary">$24.99<small class="fs-6">/year</small></div>
+                <p class="text-muted mb-4">Subsidized plan for those who qualify</p>
+                <ul class="list-unstyled mb-4">
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> All unlimited features</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Unlimited documents</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Advanced AI legal assistant</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Income verification required</li>
+                    <li class="mb-2"><i class="feather-check text-success me-2"></i> Annual billing only</li>
+                </ul>
+                <a href="{{ url_for('register') }}?plan=low_income" class="btn btn-outline-primary d-block">See If You Qualify</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-5 pt-5 border-top">
+        <h2 class="text-center mb-4">Frequently Asked Questions</h2>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card bg-dark border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Can I cancel my subscription at any time?</h5>
+                        <p class="card-text text-muted">Yes, you can cancel your subscription at any time. Your access will continue until the end of your billing period.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-dark border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">How do I qualify for the low-income plan?</h5>
+                        <p class="card-text text-muted">You'll need to provide proof of income or government assistance. We accept Notice of Assessment, Ontario Works, ODSP, or similar documentation.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-dark border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Do you offer refunds?</h5>
+                        <p class="card-text text-muted">For subscriptions, we offer a 7-day money-back guarantee. Pay-per-document purchases are non-refundable once the document is generated.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-dark border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">What payment methods do you accept?</h5>
+                        <p class="card-text text-muted">We accept all major credit cards, Interac e-Transfer, and PayPal for payment processing.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-dark border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Is this a substitute for a lawyer?</h5>
+                        <p class="card-text text-muted">No, SmartDispute.ai is designed to help with self-representation but is not a substitute for professional legal advice. For complex cases, we recommend consulting with a lawyer.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-dark border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">How accurate are the generated documents?</h5>
+                        <p class="card-text text-muted">Our documents are based on current Canadian legal forms and regulations. They include proper formatting and relevant legal citations but should be reviewed before submission.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact CTA -->
+    <div class="text-center mt-5">
+        <h3>Have more questions?</h3>
+        <p class="mb-4">Our team is happy to help answer any questions you might have about our pricing or services.</p>
+        <a href="#" class="btn btn-outline-primary">Contact Us</a>
+    </div>
+</div>
+{% endblock %}
