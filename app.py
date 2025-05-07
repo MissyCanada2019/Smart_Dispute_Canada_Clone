@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -9,7 +10,6 @@ def home():
 
 @app.route("/dashboard")
 def dashboard():
-    # Mock test data for now
     cases = [
         {
             "title": "Tenant Dispute - Rent Increase",
@@ -39,4 +39,5 @@ def dashboard():
     return render_template("dashboard.html", cases=cases, current_user=current_user)
 
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
