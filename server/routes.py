@@ -1,23 +1,78 @@
-from flask import request, jsonify
-from server.models import db, Case
+from flask import request, redirect, render_template, url_for, flash
+from flask_login import login_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import os
 
-def register_routes(app):
-    @app.route("/canlii-search", methods=["POST"])
-    def canlii_search():
-        keyword = request.form.get("keyword")
-        results = [{"title": f"Sample Case Related to {keyword}", "url": f"https://www.canlii.org/en/ca/search/?keyword={keyword}"}]
-        return jsonify(results)
+from server import app, db
+from server.models import User, GeneratedForm
+from utils.ocr import process_document
+from utils.document_generator import generate_legal_form
 
-    @app.route("/save-case", methods=["POST"])
-    def save_case():
-        title = request.form["title"]
-        url = request.form["url"]
-        new_case = Case(title=title, url=url)
-        db.session.add(new_case)
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+        if user:
+            flash("Email already registered", "danger")
+            return redirect(url_for("register"))
+
+        new_user = User(
+            email=email,
+            password_hash=generate_password_hash(password),
+            full_name=request.form["full_name"],
+            address=request.form["address"],
+            phone=request.form["phone"],
+            postal_code=request.form["postal_code"],
+            province=request.form["province"],
+            date_of_birth=request.form["date_of_birth"]
+        )
+        db.session.add(new_user)
         db.session.commit()
-        return "Saved"
+        login_user(new_user)
+        return redirect(url_for("dashboard"))
 
-    @app.route("/dashboard", methods=["GET"])
-    def dashboard():
-        cases = Case.query.all()
-        return jsonify([{"title": c.title, "url": c.url} for c in cases])
+    return render_template("register.html")
+
+
+@app.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload():
+    if request.method == "POST":
+        uploaded_file = request.files["document"]
+        if uploaded_file:
+            filename = secure_filename(uploaded_file.filename)
+            upload_path = os.path.join("uploads", filename)
+            uploaded_file.save(upload_path)
+
+            text, metadata = process_document(upload_path, filename.split(".")[-1])
+
+            # Auto-fill form using user data
+            form_data = {
+                "FULL_NAME": current_user.full_name or "",
+                "ADDRESS": current_user.address or "",
+                "PHONE": current_user.phone or "",
+                "POSTAL_CODE": current_user.postal_code or "",
+                "PROVINCE": current_user.province or "",
+                "DATE_OF_BIRTH": current_user.date_of_birth or ""
+            }
+
+            template_path = "templates/forms/sample_template.docx"
+            output_path = f"generated_forms/{current_user.id}_{filename}.docx"
+            generate_legal_form(template_path, output_path, form_data)
+
+            new_form = GeneratedForm(
+                user_id=current_user.id,
+                form_name="Auto-Generated Form",
+                file_path=output_path
+            )
+            db.session.add(new_form)
+            db.session.commit()
+
+            flash("Your document was processed and form generated.", "success")
+            return redirect(url_for("dashboard"))
+
+    return render_template("upload.html")
