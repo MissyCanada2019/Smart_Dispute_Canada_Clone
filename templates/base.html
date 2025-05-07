@@ -1,14 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartDispute.ai</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SmartDispute.ai Canada{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <div class="container">
+
+  <header>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="SmartDispute Logo" style="max-width: 120px; margin-top: 10px;">
+    <h1>SmartDispute.ai Canada</h1>
+    <p>Justice Engine for Everyday Canadians</p>
+  </header>
+
+  <main>
     {% block content %}{% endblock %}
-  </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 SmartDispute.ai Canada — All rights reserved.</p>
+  </footer>
+
 </body>
 </html>
