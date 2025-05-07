@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Documents | SmartDispute.ai Canada{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Upload Your Documents</h2>
+    <p class="mb-4">Your documents will be analyzed using Canadian legal databases and AI to generate court-ready forms.</p>
+
+    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="case_type" class="form-label">Case Type</label>
+            <select class="form-select" id="case_type" name="case_type" required>
+                <option selected disabled value="">Choose...</option>
+                <option value="tenant">Landlord-Tenant Dispute</option>
+                <option value="credit">Credit Report Error</option>
+                <option value="human_rights">Human Rights Complaint</option>
+                <option value="small_claims">Small Claims Issue</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="document" class="form-label">Upload File</label>
+            <input class="form-control" type="file" id="document" name="document" required>
+            <div class="form-text">Accepted formats: PDF, DOCX, PNG, JPG</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Analyze My Case</button>
+    </form>
+</div>
+{% endblock %}
