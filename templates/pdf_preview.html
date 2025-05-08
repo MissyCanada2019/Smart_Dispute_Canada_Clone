@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartDispute PDF Preview</title>
+  <style>
+    body { font-family: Arial; padding: 40px; color: #222; }
+    h1 { color: #d32f2f; }
+    .section { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>SmartDispute Legal Package</h1>
+  <div class="section">
+    <strong>Client:</strong> {{ user.full_name }}<br>
+    <strong>Province:</strong> {{ user.province }}<br>
+    <strong>Case Title:</strong> {{ case.title }}<br>
+    <strong>Date:</strong> {{ case.created_at.strftime('%B %d, %Y') }}
+  </div>
+
+  <div class="section">
+    <h3>Summary:</h3>
+    <p>This case is being processed using AI-powered legal tools. Please see the attached documentation and evidence if downloaded as part of a package.</p>
+  </div>
+</body>
+</html>
