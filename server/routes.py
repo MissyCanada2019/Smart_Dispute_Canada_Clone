@@ -17,7 +17,7 @@ from utils.document_generator import generate_legal_form
 
 
 # --- Case Creation ---
-@app.route("/create-case", methods=["GET", "POST"])
+@routes.route("/create-case", methods=["GET", "POST"])
 @login_required
 def create_case():
     if request.method == "POST":
