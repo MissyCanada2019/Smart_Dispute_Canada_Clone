@@ -1,34 +1,65 @@
+# utils/merit_weight.py
+import logging
+import random
 
-def analyze_merit_weight(ocr_output):
+# Simulated scraping results from Canadian legal resources (replace with real query later)
+SIMULATED_PRECEDENTS = {
+    "Landlord-Tenant Dispute": {"win_rate": 0.76, "avg_award": 5000},
+    "Credit Report Error": {"win_rate": 0.62, "avg_award": 1000},
+    "Human Rights Complaint": {"win_rate": 0.51, "avg_award": 8000},
+    "Small Claims": {"win_rate": 0.70, "avg_award": 2000},
+    "Police Misconduct": {"win_rate": 0.43, "avg_award": 15000},
+    "Child Protection (CAS)": {"win_rate": 0.55, "avg_award": 0},
+}
+
+PROVINCE_MODIFIERS = {
+    "ON": 1.00,
+    "BC": 1.05,
+    "QC": 0.95,
+    "AB": 0.90,
+    "SK": 1.02,
+    "NS": 1.01,
+    "MB": 0.88
+}
+
+
+def query_canadian_case_stats(issue_category, province="ON"):
     """
-    Analyze the AI OCR output and assign a merit score (0-100)
-    and a human-readable explanation for decision support.
+    Simulates querying Canadian legal databases (CanLII, court websites, gov portals).
+    Returns success rate (win%) and average damages from past similar cases.
     """
-    score = 0
-    notes = []
+    base_data = SIMULATED_PRECEDENTS.get(issue_category, {"win_rate": 0.40, "avg_award": 1000})
+    modifier = PROVINCE_MODIFIERS.get(province.upper(), 1.0)
 
-    # Example scoring based on simple heuristics in the OCR text
-    ocr_text = str(ocr_output).lower()
+    adjusted_win_rate = min(base_data["win_rate"] * modifier, 0.95)  # Cap at 95%
+    return {
+        "win_rate": round(adjusted_win_rate, 2),
+        "avg_award": round(base_data["avg_award"] * modifier, 2)
+    }
 
-    if "harassment" in ocr_text:
-        score += 25
-        notes.append("Keyword 'harassment' detected.")
 
-    if "unlivable" in ocr_text or "unsafe" in ocr_text:
-        score += 25
-        notes.append("Conditions appear unsafe or unlivable.")
+def score_merit(issues_detected, province="ON", matched_keywords=None):
+    """
+    Assigns a dynamic merit score based on issues, province, keyword strength,
+    and mock Canadian precedent success rates.
+    """
+    total_score = 0
+    total_weight = 0
 
-    if "ignored" in ocr_text or "no response" in ocr_text:
-        score += 15
-        notes.append("Lack of response from responsible party.")
+    for issue in issues_detected:
+        case_data = query_canadian_case_stats(issue, province)
+        issue_score = case_data["win_rate"] * 100  # Convert to percentage
+        total_score += issue_score
+        total_weight += 1
 
-    if "medical" in ocr_text or "health" in ocr_text:
-        score += 20
-        notes.append("Health/medical concern mentioned.")
+    # Add keyword bonus
+    if matched_keywords:
+        keyword_boost = min(len(matched_keywords) * 1.5, 15)
+    else:
+        keyword_boost = 0
 
-    if "child" in ocr_text or "baby" in ocr_text:
-        score += 15
-        notes.append("Children involved, increases merit weight.")
+    # Final merit calculation
+    base_avg = total_score / total_weight if total_weight else 30
+    final_score = min(base_avg + keyword_boost, 100)
 
-    final_score = min(score, 100)
-    return final_score, "; ".join(notes)
+    return round(final_score, 2)
