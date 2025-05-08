@@ -1,53 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SmartDispute.ai Canada</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
-</head>
-<body>
-  <header>
-    <nav class="navbar">
-      <div class="container">
-        <h1 class="brand"><span class="red">Smart</span>Dispute<span class="dot">.ai</span></h1>
-        <ul class="nav-links">
-          <li><a href="{{ url_for('register') }}">Register</a></li>
-          <li><a href="{{ url_for('login') }}">Login</a></li>
-          <li><a href="{{ url_for('upload') }}" class="button">Start Now</a></li>
-        </ul>
-      </div>
-    </nav>
-  </header>
+{% extends "base.html" %}
 
-  <section class="hero">
-    <div class="hero-content">
-      <h2>Your AI Justice Engine</h2>
-      <p>Instant legal help for Canadians—no lawyer needed.</p>
-      <a href="{{ url_for('upload') }}" class="cta">Upload Your Documents</a>
-    </div>
-    <img src="{{ url_for('static', filename='img/maple-leaf.png') }}" alt="Maple Leaf" class="leaf-decor">
-  </section>
+{% block title %}Welcome to SmartDispute{% endblock %}
 
-  <section class="features">
-    <div class="feature">
-      <h3>100% Canadian Law</h3>
-      <p>SmartDispute is trained on federal and provincial legislation, CanLII, and real case history.</p>
-    </div>
-    <div class="feature">
-      <h3>Instant Merit Score</h3>
-      <p>Upload your documents and instantly receive a score based on similar cases won in Canada.</p>
-    </div>
-    <div class="feature">
-      <h3>Pre-Filled Forms</h3>
-      <p>Your evidence auto-generates the exact forms you need—with your details pre-filled and ready to serve.</p>
-    </div>
-  </section>
-
-  <footer>
-    <p>&copy; 2025 SmartDispute.ai Canada | Proudly Canadian</p>
-  </footer>
-</body>
-</html>
+{% block content %}
+<section class="hero text-center text-white p-5" style="background-image: url('{{ url_for('static', filename='images/justice-canada.jpg') }}'); background-size: cover; background-position: center;">
+  <div class="overlay" style="background-color: rgba(0, 0, 0, 0.6); padding: 2rem;">
+    <h2 class="display-4">Justice for All Canadians</h2>
+    <p class="lead">Upload your evidence, get your merit score, and generate legal documents — without a lawyer.</p>
+    <a href="/register" class="btn btn-danger btn-lg mt-3">Get Started</a>
+  </div>
+</section>
+{% endblock %}
