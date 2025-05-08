@@ -1,6 +1,10 @@
-flask
-gunicorn
-python-docx
-beautifulsoup4
-requests
-Flask-SQLAlchemy
+Flask==2.3.2
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+python-dotenv==1.0.0
+requests==2.31.0
+pytesseract==0.3.10
+Pillow==9.5.0
+python-docx==1.1.0
+PyMuPDF==1.22.5
