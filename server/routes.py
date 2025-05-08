@@ -14,6 +14,11 @@ from utils.document_generator import generate_legal_form
 
 routes = Blueprint("routes", __name__)
 
+# --- Homepage ---
+@routes.route("/")
+def home():
+    return render_template("index.html")
+
 # --- Case Creation ---
 @routes.route("/create-case", methods=["GET", "POST"])
 @login_required
@@ -25,11 +30,10 @@ def create_case():
         db.session.add(new_case)
         db.session.commit()
         flash("Case created successfully!", "success")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("routes.dashboard"))
     return render_template("create_case.html")
 
-
-# --- Evidence Upload ---
+# --- Upload Evidence ---
 @routes.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
@@ -53,18 +57,24 @@ def upload():
             db.session.add(new_evidence)
             db.session.commit()
             flash("Evidence uploaded successfully.", "success")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("routes.dashboard"))
     return render_template("upload.html", cases=cases)
 
+# --- Dashboard (example placeholder) ---
+@routes.route("/dashboard")
+@login_required
+def dashboard():
+    cases = Case.query.filter_by(user_id=current_user.id).all()
+    return render_template("dashboard.html", cases=cases)
 
-# --- Generate Legal Package with AI ---
+# --- Generate Legal Package ---
 @routes.route("/generate-legal-package/<int:case_id>")
 @login_required
 def generate_legal_package(case_id):
     case = Case.query.get_or_404(case_id)
     if case.user_id != current_user.id:
         flash("Unauthorized", "danger")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("routes.dashboard"))
 
     paid = Payment.query.filter_by(case_id=case_id, status="completed").first()
     if not paid and current_user.subscription_type != "unlimited":
@@ -105,15 +115,32 @@ def generate_legal_package(case_id):
     return send_file(zip_buffer, mimetype='application/zip',
                      download_name=f"SmartDispute_Package_{case.title}.zip", as_attachment=True)
 
+# --- PDF Preview ---
+@routes.route("/generate-pdf-preview/<int:case_id>")
+@login_required
+def generate_pdf_preview(case_id):
+    case = Case.query.get_or_404(case_id)
+    if case.user_id != current_user.id:
+        flash("Unauthorized", "danger")
+        return redirect(url_for("routes.dashboard"))
 
-# --- Payment Instructions Page ---
+    html = render_template("pdf_preview.html", case=case, user=current_user)
+    pdf = HTML(string=html).write_pdf()
+
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=SmartDispute_Preview_{case.title}.pdf'
+
+    return response
+
+# --- Payment Page ---
 @routes.route("/pay/<int:case_id>")
 @login_required
 def pay_for_case(case_id):
     case = Case.query.get_or_404(case_id)
     if case.user_id != current_user.id:
         flash("Unauthorized", "danger")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("routes.dashboard"))
 
     paid = Payment.query.filter_by(case_id=case_id, status="completed").first()
     if paid or current_user.subscription_type == "unlimited":
@@ -122,20 +149,5 @@ def pay_for_case(case_id):
 
     return render_template("pay_etf.html", case=case)
 
-
-# --- PDF Preview via HTML (Fallback) ---
-@routes.route("/generate-pdf-preview/<int:case_id>")
-@login_required
-def generate_pdf_preview(case_id):
-    case = Case.query.get_or_404(case_id)
-    if case.user_id != current_user.id:
-        flash("Unauthorized", "danger")
-        return redirect(url_for("dashboard"))
-
-    html = render_template("pdf_preview.html", case=case, user=current_user)
-    pdf = HTML(string=html).write_pdf()
-
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=SmartDispute_Preview_{case.title}.pdf'
-    return response
+# Register blueprint in __init__.py:
+# app.register_blueprint(routes)
