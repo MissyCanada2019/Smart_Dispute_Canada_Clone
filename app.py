@@ -1,43 +1,33 @@
-from flask import Flask, render_template
-from datetime import datetime
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from server.routes import register_routes
+from utils.models import db, User  # adjust path if needed
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='templates')
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+# Secret key & config
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max upload size
 
-@app.route("/dashboard")
-def dashboard():
-    cases = [
-        {
-            "title": "Tenant Dispute - Rent Increase",
-            "merit_score": 0.85,
-            "created_at": datetime.now(),
-            "updated_at": datetime.now(),
-            "category": "Housing",
-            "status": "in_review",
-            "documents": ["lease.pdf", "notice.png"]
-        },
-        {
-            "title": "Credit Report Error",
-            "merit_score": 0.72,
-            "created_at": datetime.now(),
-            "updated_at": datetime.now(),
-            "category": "Credit",
-            "status": "awaiting_documents",
-            "documents": []
-        }
-    ]
+# Initialize DB and Login Manager
+db.init_app(app)
+migrate = Migrate(app, db)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-    current_user = {
-        "subscription_type": "free",
-        "subscription_end": datetime(2025, 12, 31)
-    }
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-    return render_template("dashboard.html", cases=cases, current_user=current_user)
+# Register all routes
+register_routes(app)
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+# Run app
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
