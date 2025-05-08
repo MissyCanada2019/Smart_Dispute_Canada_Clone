@@ -1,20 +1,18 @@
-# routes.py
-
 import os
 import io
 import zipfile
-from flask import render_template, request, redirect, url_for, flash, send_file, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, make_response
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from weasyprint import HTML
 
-from server.models import db
-from server.models import Case, Evidence, Payment
+from server.models import db, Case, Evidence, Payment
 from utils.ocr import process_document
 from utils.issue_classifier import extract_legal_issues
 from utils.merit_weight import score_merit
 from utils.document_generator import generate_legal_form
 
+routes = Blueprint("routes", __name__)
 
 # --- Case Creation ---
 @routes.route("/create-case", methods=["GET", "POST"])
@@ -32,7 +30,7 @@ def create_case():
 
 
 # --- Evidence Upload ---
-@app.route("/upload", methods=["GET", "POST"])
+@routes.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
     cases = Case.query.filter_by(user_id=current_user.id).all()
@@ -60,7 +58,7 @@ def upload():
 
 
 # --- Generate Legal Package with AI ---
-@app.route("/generate-legal-package/<int:case_id>")
+@routes.route("/generate-legal-package/<int:case_id>")
 @login_required
 def generate_legal_package(case_id):
     case = Case.query.get_or_404(case_id)
@@ -70,7 +68,7 @@ def generate_legal_package(case_id):
 
     paid = Payment.query.filter_by(case_id=case_id, status="completed").first()
     if not paid and current_user.subscription_type != "unlimited":
-        return redirect(url_for("pay_for_case", case_id=case.id))
+        return redirect(url_for("routes.pay_for_case", case_id=case.id))
 
     combined_text = ""
     for ev in case.evidence:
@@ -109,7 +107,7 @@ def generate_legal_package(case_id):
 
 
 # --- Payment Instructions Page ---
-@app.route("/pay/<int:case_id>")
+@routes.route("/pay/<int:case_id>")
 @login_required
 def pay_for_case(case_id):
     case = Case.query.get_or_404(case_id)
@@ -120,13 +118,13 @@ def pay_for_case(case_id):
     paid = Payment.query.filter_by(case_id=case_id, status="completed").first()
     if paid or current_user.subscription_type == "unlimited":
         flash("Payment already completed for this case.", "info")
-        return redirect(url_for("generate_legal_package", case_id=case.id))
+        return redirect(url_for("routes.generate_legal_package", case_id=case.id))
 
     return render_template("pay_etf.html", case=case)
 
 
 # --- PDF Preview via HTML (Fallback) ---
-@app.route("/generate-pdf-preview/<int:case_id>")
+@routes.route("/generate-pdf-preview/<int:case_id>")
 @login_required
 def generate_pdf_preview(case_id):
     case = Case.query.get_or_404(case_id)
@@ -140,5 +138,4 @@ def generate_pdf_preview(case_id):
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=SmartDispute_Preview_{case.title}.pdf'
-
     return response
