@@ -8,7 +8,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from weasyprint import HTML
 
-from server import db
+from server.models import db
 from server.models import Case, Evidence, Payment
 from utils.ocr import process_document
 from utils.issue_classifier import extract_legal_issues
