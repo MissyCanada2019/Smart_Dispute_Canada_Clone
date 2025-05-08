@@ -172,3 +172,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+# Uploads and generated forms (user files)
+uploads/
+generated_forms/
+
+# Secrets (if stored locally)
+.env
+*.env
