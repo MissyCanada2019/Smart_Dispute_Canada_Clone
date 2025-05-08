@@ -1,34 +1,53 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartDispute.ai Canada</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="container">
+        <h1 class="brand"><span class="red">Smart</span>Dispute<span class="dot">.ai</span></h1>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('upload') }}" class="button">Start Now</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
 
-{% block title %}Home | SmartDispute.ai Canada{% endblock %}
-
-{% block content %}
-<div class="text-center">
-    <h2 class="display-5 fw-bold mb-4">Legal Empowerment for Every Canadian</h2>
-    <p class="lead mb-4">
-        Upload your evidence. Generate court-ready documents. All backed by real Canadian law and AI analysis.
-    </p>
-
-    <a href="{{ url_for('upload') }}" class="btn btn-primary btn-lg mb-5">Start Your Case</a>
-
-    <div class="row text-start">
-        <div class="col-md-6 mb-4">
-            <h4>What We Help With</h4>
-            <ul>
-                <li>Landlord-Tenant Disputes</li>
-                <li>Credit Report Errors</li>
-                <li>Human Rights Complaints</li>
-                <li>Small Claims Issues</li>
-            </ul>
-        </div>
-        <div class="col-md-6 mb-4">
-            <h4>How It Works</h4>
-            <ol>
-                <li>Upload your documents and evidence</li>
-                <li>AI scans Canadian law and analyzes your case</li>
-                <li>Download your personalized, court-ready legal forms</li>
-            </ol>
-        </div>
+  <section class="hero">
+    <div class="hero-content">
+      <h2>Your AI Justice Engine</h2>
+      <p>Instant legal help for Canadians—no lawyer needed.</p>
+      <a href="{{ url_for('upload') }}" class="cta">Upload Your Documents</a>
     </div>
-</div>
-{% endblock %}
+    <img src="{{ url_for('static', filename='img/maple-leaf.png') }}" alt="Maple Leaf" class="leaf-decor">
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <h3>100% Canadian Law</h3>
+      <p>SmartDispute is trained on federal and provincial legislation, CanLII, and real case history.</p>
+    </div>
+    <div class="feature">
+      <h3>Instant Merit Score</h3>
+      <p>Upload your documents and instantly receive a score based on similar cases won in Canada.</p>
+    </div>
+    <div class="feature">
+      <h3>Pre-Filled Forms</h3>
+      <p>Your evidence auto-generates the exact forms you need—with your details pre-filled and ready to serve.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 SmartDispute.ai Canada | Proudly Canadian</p>
+  </footer>
+</body>
+</html>
