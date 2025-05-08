@@ -13,3 +13,5 @@ python-docx
 docx2pdf
 pypandoc
 weasyprint
+PyMuPDF
+pytesseract
