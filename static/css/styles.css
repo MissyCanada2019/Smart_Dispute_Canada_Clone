@@ -1,130 +1,50 @@
-/* Global Styles */
 body {
-  margin: 0;
-  font-family: 'Roboto', sans-serif;
-  background-color: #111;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
   color: #f5f5f5;
+  margin: 0;
+  padding: 0;
 }
 
 a {
-  color: #f44336;
   text-decoration: none;
 }
 
-a:hover {
-  text-decoration: underline;
+.navbar a {
+  font-weight: 500;
 }
 
-/* Navbar */
-.navbar {
-  background-color: #000;
-  padding: 1rem 0;
-  border-bottom: 3px solid #f44336;
-}
-
-.navbar .container {
-  width: 90%;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand {
-  font-size: 1.8rem;
-  font-weight: bold;
-}
-
-.brand .red {
-  color: #f44336;
-}
-
-.brand .dot {
-  color: #fff;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 1rem;
-}
-
-.nav-links li {
-  display: inline;
-}
-
-.nav-links .button {
-  padding: 8px 15px;
-  background-color: #f44336;
+.navbar-brand {
+  font-size: 1.5rem;
   color: white;
-  border-radius: 5px;
 }
 
-/* Hero Section */
 .hero {
-  position: relative;
-  background: linear-gradient(to bottom, #222, #000);
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 4rem 2rem;
 }
 
 .hero h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  color: #fff;
-}
-
-.hero p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  color: #ccc;
-}
-
-.hero .cta {
-  background-color: #f44336;
-  padding: 12px 25px;
   font-weight: bold;
   color: white;
-  border-radius: 5px;
 }
 
-.hero .leaf-decor {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 80px;
-  opacity: 0.2;
+.hero .lead {
+  font-size: 1.2rem;
+  color: #ddd;
 }
 
-/* Features Section */
-.features {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  padding: 3rem 2rem;
-  background-color: #181818;
+.overlay {
+  border-radius: 10px;
 }
 
-.feature {
-  width: 300px;
-  margin: 1rem;
-  text-align: center;
-}
-
-.feature h3 {
-  color: #f44336;
-  margin-bottom: 0.5rem;
-}
-
-.feature p {
-  font-size: 0.95rem;
-  color: #ccc;
-}
-
-/* Footer */
 footer {
-  background-color: #000;
-  text-align: center;
-  padding: 1rem;
-  color: #888;
+  border-top: 1px solid #444;
+}
+
+.alert {
+  font-size: 0.95rem;
 }
