@@ -1,50 +1,132 @@
+/* General Layout */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   background-color: #121212;
   color: #f5f5f5;
   margin: 0;
   padding: 0;
 }
 
-a {
-  text-decoration: none;
-}
-
-.navbar a {
-  font-weight: 500;
-}
-
-.navbar-brand {
-  font-size: 1.5rem;
+/* Header */
+header {
+  background: linear-gradient(45deg, #ff0000, #990000);
   color: white;
-}
-
-.hero {
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 2rem;
   text-align: center;
+  border-bottom: 3px solid #ffeb3b;
 }
 
-.hero h2 {
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.3rem;
+}
+
+header p {
+  font-size: 1.2rem;
+  font-weight: 300;
+}
+
+/* Navigation */
+nav {
+  background: #1a1a1a;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav a {
+  color: #ffcccb;
+  text-decoration: none;
+  margin: 0 1rem;
   font-weight: bold;
+}
+
+nav a:hover {
+  color: #ffffff;
+}
+
+/* Intro Section */
+#intro {
+  padding: 3rem;
+  text-align: center;
+  background-color: #181818;
+  border-top: 4px solid #e53935;
+  border-bottom: 4px solid #e53935;
+}
+
+#intro h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #ff5252;
+}
+
+#intro p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: #dddddd;
+}
+
+#intro a {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background-color: #e53935;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+#intro a:hover {
+  background-color: #d32f2f;
+}
+
+/* Footer */
+footer {
+  background-color: #1f1f1f;
+  color: #bbb;
+  text-align: center;
+  padding: 1.5rem;
+  margin-top: 4rem;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+button,
+.btn {
+  background-color: #e53935;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover,
+.btn:hover {
+  background-color: #c62828;
+}
+
+/* Flash Messages */
+.alert {
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.alert-success {
+  background-color: #2e7d32;
   color: white;
 }
 
-.hero .lead {
-  font-size: 1.2rem;
-  color: #ddd;
+.alert-danger {
+  background-color: #c62828;
+  color: white;
 }
 
-.overlay {
-  border-radius: 10px;
-}
-
-footer {
-  border-top: 1px solid #444;
-}
-
-.alert {
-  font-size: 0.95rem;
+.alert-info {
+  background-color: #0277bd;
+  color: white;
 }
