@@ -1,18 +1,24 @@
-# server/__init__.py
-
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
-import os
 
 from server.models import db, User
-from server.routes import routes  # Import the Blueprint
+from server.routes import routes  # Import your blueprint
 
 login_manager = LoginManager()
 
 def create_app():
-    app = Flask(__name__, static_folder='static', template_folder='templates')
+    # Get absolute path to the directory this file is in
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+
+    # Set correct paths for templates and static folders (they are one level above this file)
+    app = Flask(
+        __name__,
+        static_folder=os.path.join(base_dir, '..', 'static'),
+        template_folder=os.path.join(base_dir, '..', 'templates')
+    )
 
     # App config
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-key")
@@ -27,7 +33,7 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'login'
 
-    # Load user callback
+    # User loader
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
