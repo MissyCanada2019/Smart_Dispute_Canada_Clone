@@ -3,47 +3,24 @@
 {% block title %}Welcome to SmartDispute Canada{% endblock %}
 
 {% block content %}
-<!-- Hero Banner -->
+<!-- Hero Banner (uses a stable external Canadian flag) -->
 <section class="text-center text-white p-5" 
-         style="background-image: url('{{ url_for('static', filename='logo.png') }}'); 
-                background-size: contain; 
-                background-repeat: no-repeat; 
-                background-position: center;
-                background-color: #b71c1c;">
-  <div style="background-color: rgba(0, 0, 0, 0.7); padding: 3rem;">
+         style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/c/cf/Canadian_flag.png'); 
+                background-size: cover; 
+                background-position: center;">
+  <div style="background-color: rgba(0, 0, 0, 0.6); padding: 3rem;">
     <h1 class="display-4">SmartDispute.ai Canada</h1>
-    <p class="lead">Empowering Canadians to fight back — no lawyer needed.</p>
+    <p class="lead">Helping Canadians fight back with AI-powered legal tools.</p>
     <a href="/register" class="btn btn-light btn-lg mt-3">Get Started</a>
   </div>
 </section>
 
-<!-- Icons/Features -->
-<section class="container text-center my-5">
-  <div class="row">
-    <div class="col-md-4">
-      <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" width="80" alt="Justice Icon">
-      <h4 class="mt-3">Fight for Your Rights</h4>
-      <p>Generate legal forms, letters, and notices in minutes — based on real Canadian law.</p>
-    </div>
-    <div class="col-md-4">
-      <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" width="80" alt="Maple Leaf Icon">
-      <h4 class="mt-3">Built for Canadians</h4>
-      <p>We focus on tenant rights, credit disputes, CAS claims, and government accountability.</p>
-    </div>
-    <div class="col-md-4">
-      <img src="https://cdn-icons-png.flaticon.com/512/2991/2991108.png" width="80" alt="Document Icon">
-      <h4 class="mt-3">No Legal Background Needed</h4>
-      <p>Just upload your documents, get a merit score, and download your full legal package.</p>
-    </div>
-  </div>
-</section>
-
-<!-- About Us -->
+<!-- About Section -->
 <section class="bg-light p-5">
-  <div class="container">
-    <h2 class="text-center mb-4">About SmartDispute</h2>
-    <p class="lead text-center">SmartDispute was born out of a real Canadian’s fight against housing injustice, discrimination, and systems that silence the unheard.</p>
-    <p class="text-center">We’re here to put justice back into the hands of everyday Canadians — using the power of AI and self-advocacy. Whether you’re battling a landlord, correcting your credit, or holding a government office accountable, SmartDispute is your justice engine.</p>
+  <div class="container text-center">
+    <h2>About Us</h2>
+    <p class="lead">SmartDispute was founded by real Canadians who experienced the injustice of being unheard in court, ignored by housing authorities, and overlooked by the system.</p>
+    <p>We’re here to flip the script. Upload your documents, get your merit score, and let the law work for you — without needing a lawyer.</p>
   </div>
 </section>
 {% endblock %}
