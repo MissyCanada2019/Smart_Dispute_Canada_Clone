@@ -1,11 +1,11 @@
-import os  # <-- You need this!
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
 from src.server.models import db, User
-from src.server.routes import routes
+from src.server.routes import register_routes  # Only this
 
 login_manager = LoginManager()
 
@@ -23,21 +23,20 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(base_dir, '..', 'uploads')
-    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
-    # Initialize Extensions
+    # Initialize extensions
     db.init_app(app)
     migrate = Migrate(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'routes.login'
+    login_manager.login_view = 'login'
 
-    # User loader for Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register Blueprints
-    app.register_blueprint(routes)
+    # ✅ Register routes using your manual function
+    register_routes(app)
 
     # Ensure upload folder exists
     upload_path = app.config['UPLOAD_FOLDER']
@@ -45,3 +44,4 @@ def create_app():
         os.makedirs(upload_path)
 
     return app
+
