@@ -1,11 +1,10 @@
-import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
 from src.server.models import db, User
-from src.server.routes import routes  # Adjusted import for src structure
+from src.server.routes import routes
 
 login_manager = LoginManager()
 
