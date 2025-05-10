@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from server.models import db, Case
+register_routes(app)
 
 def register_routes(app):
     @app.route("/canlii-search", methods=["POST"])
