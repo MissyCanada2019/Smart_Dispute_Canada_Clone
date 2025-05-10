@@ -21,6 +21,4 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-key")
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['UPLOAD_FOLDER'] = '
-
-If you've now created an **`src` folder** and moved your entire **`server` directory** inside it, your project structure looks like this:
+    app.config['UPLOAD_FOLDER'] = 
