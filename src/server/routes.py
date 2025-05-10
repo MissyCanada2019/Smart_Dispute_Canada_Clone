@@ -3,7 +3,6 @@ register_routes(app)
 
 def register_routes(app):
     @app.route("/something")
-    ...
 
         keyword = request.form.get("keyword")
         results = [{
