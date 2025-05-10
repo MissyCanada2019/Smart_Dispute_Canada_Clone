@@ -1,12 +1,6 @@
-def create_app():
-    app = Flask(__name__)
-    app.config["SECRET_KEY"] = "your-secret-key"
-    # other config...
+from src.server import create_app
 
-    db.init_app(app)
-    Migrate(app, db)
+app = create_app()
 
-    # Blueprint registration
-    app.register_blueprint(routes)
-
-    return app  # <-- exactly 4 spaces (no tabs or extra spaces)
+if __name__ == "__main__":
+    app.run()
