@@ -4,8 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
-from server.models import db, User
-from server.routes import routes  # Your blueprint import
+from src.server.models import db, User
+from src.server.routes import routes  # Adjusted import for src structure
 
 login_manager = LoginManager()
 
