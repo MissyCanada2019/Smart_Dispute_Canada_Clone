@@ -2,8 +2,9 @@ from flask import request, jsonify
 register_routes(app)
 
 def register_routes(app):
-    @app.route("/canlii-search", methods=["POST"])
-    def canlii_search():
+    @app.route("/something")
+    ...
+
         keyword = request.form.get("keyword")
         results = [{
             "title": f"Sample Case Related to {keyword}",
