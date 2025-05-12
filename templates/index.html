@@ -1,18 +1,35 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>SmartDispute.ai - Canada's Justice Engine</title>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4Q6RTK4Q6C"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-4Q6RTK4Q6C');
+    </script>
+
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <header><h1>🍁 SmartDispute.ai 🍁</h1></header>
+    <header>
+        <h1>🍁 SmartDispute.ai 🍁</h1>
+    </header>
+
     <main>
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="files" multiple>
+            <input type="file" name="files" multiple required>
             <button type="submit">Upload & Generate</button>
         </form>
     </main>
-    <footer>Powered by Canadians 🍁</footer>
+
+    <footer>
+        Powered by Canadians 🍁
+    </footer>
 </body>
 </html>
