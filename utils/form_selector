@@ -1,0 +1,64 @@
+def select_form(issue_type, province="ON"):
+    issue_type = issue_type.lower()
+    province = province.upper()
+
+    form_map = {
+        "tenant": {
+            "ON": {
+                "court": "Landlord and Tenant Board",
+                "form_name": "LTB T2 - Application about Tenant Rights",
+                "form_file": "ltb_t2.docx",
+                "notes": "Used for tenants filing complaints about landlord breaches."
+            },
+            "BC": {
+                "court": "BC Residential Tenancy Branch",
+                "form_name": "Dispute Resolution Application",
+                "form_file": "bc_rtb_dispute.docx",
+                "notes": "Used for rental housing issues in BC."
+            }
+        },
+        "human_rights": {
+            "ON": {
+                "court": "Human Rights Tribunal of Ontario",
+                "form_name": "Form 1 - Application",
+                "form_file": "hrto_form1.docx",
+                "notes": "Used for discrimination or equality rights violations."
+            }
+        },
+        "credit": {
+            "ON": {
+                "court": "Federal Privacy Commissioner / Civil Court",
+                "form_name": "Credit Reporting Complaint",
+                "form_file": "credit_dispute_letter.docx",
+                "notes": "Used for disputing credit bureau errors."
+            }
+        },
+        "family": {
+            "ON": {
+                "court": "Ontario Family Court",
+                "form_name": "Form 8 - Application (General)",
+                "form_file": "family_form8.docx",
+                "notes": "Used to start a family court case."
+            }
+        },
+        "small_claims": {
+            "ON": {
+                "court": "Ontario Small Claims Court",
+                "form_name": "Plaintiff’s Claim",
+                "form_file": "sc_plaintiff_claim.docx",
+                "notes": "Used for claims under $35,000."
+            }
+        }
+    }
+
+    for keyword, regions in form_map.items():
+        if keyword in issue_type:
+            return regions.get(province, list(regions.values())[0])  # Fallback to first if province not matched
+
+    # Default fallback
+    return {
+        "court": "Civil Court",
+        "form_name": "General Legal Complaint",
+        "form_file": "generic_complaint.docx",
+        "notes": "Used when no specific form is matched."
+    }
