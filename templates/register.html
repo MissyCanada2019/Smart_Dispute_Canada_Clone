@@ -1,20 +1,33 @@
-{{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Register | SmartDispute.ai{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2>Create an Account</h2>
-    <form method="POST" action="{{ url_for('register') }}">
-        <input type="email" name="email" placeholder="Email" class="form-control mb-2" required>
-        <input type="password" name="password" placeholder="Password" class="form-control mb-2" required>
-        <input type="text" name="full_name" placeholder="Full Name" class="form-control mb-2" required>
-        <input type="text" name="address" placeholder="Address" class="form-control mb-2">
-        <input type="text" name="phone" placeholder="Phone" class="form-control mb-2">
-        <input type="text" name="postal_code" placeholder="Postal Code" class="form-control mb-2">
-        <input type="text" name="province" placeholder="Province" class="form-control mb-2">
-        <input type="text" name="date_of_birth" placeholder="Date of Birth (YYYY-MM-DD)" class="form-control mb-3">
-        <button type="submit" class="btn btn-primary">Create Account</button>
+<div class="container py-5">
+    <h2 class="mb-4 text-center">Create Your Account</h2>
+    <form method="POST" action="{{ url_for('register', plan=request.args.get('plan')) }}" enctype="multipart/form-data" class="mx-auto" style="max-width: 600px;">
+
+        <input type="email" name="email" class="form-control mb-3" placeholder="Email" required>
+        <input type="password" name="password" class="form-control mb-3" placeholder="Password" required>
+        <input type="text" name="full_name" class="form-control mb-3" placeholder="Full Name" required>
+        <input type="text" name="address" class="form-control mb-3" placeholder="Address">
+        <input type="text" name="phone" class="form-control mb-3" placeholder="Phone">
+        <input type="text" name="postal_code" class="form-control mb-3" placeholder="Postal Code">
+        <input type="text" name="province" class="form-control mb-3" placeholder="Province" required>
+
+        {% if request.args.get('plan') == 'low_income' %}
+            <div class="mb-3">
+                <label for="verification_doc" class="form-label fw-bold">Upload Proof of Low-Income Status</label>
+                <input type="file" name="verification_doc" class="form-control" required>
+                <div class="form-text">Accepted: OW, ODSP, Notice of Assessment, etc.</div>
+            </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
+
+    <p class="text-center mt-3">
+        Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+    </p>
 </div>
 {% endblock %}
