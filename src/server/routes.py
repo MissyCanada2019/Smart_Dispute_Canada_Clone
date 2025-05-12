@@ -1,5 +1,5 @@
 import os
-from flask import request, render_template, redirect, url_for, flash
+from flask import request, render_template, redirect, url_for, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -138,11 +138,53 @@ def register_routes(app):
         return redirect(url_for("review_case", case_id=case_id))
 
     @app.route("/admin/cases")
-@login_required
-def admin_cases():
-    if not current_user.is_admin:
-        flash("Access denied", "danger")
-        return redirect(url_for("dashboard"))
+    @login_required
+    def admin_cases():
+        if not current_user.is_admin:
+            flash("Access denied", "danger")
+            return redirect(url_for("dashboard"))
 
-    unpaid_cases = Case.query.filter_by(is_paid=False).all()
-    return render_template("admin_cases.html", cases=unpaid_cases)# TODO: Add admin unlock endpoint here
+        unpaid_cases = Case.query.filter_by(is_paid=False).all()
+        return render_template("admin_cases.html", cases=unpaid_cases)
+
+    @app.route("/admin/unlock/<int:case_id>", methods=["POST"])
+    @login_required
+    def admin_unlock_case(case_id):
+        if not current_user.is_admin:
+            flash("Unauthorized", "danger")
+            return redirect(url_for("dashboard"))
+
+        case = Case.query.get_or_404(case_id)
+        case.is_paid = True
+        db.session.commit()
+        flash(f"Case {case.id} unlocked for download.", "success")
+        return redirect(url_for("admin_cases"))
+
+    @app.route("/download-form/<int:case_id>")
+    @login_required
+    def download_form(case_id):
+        case = Case.query.get_or_404(case_id)
+        if not case.is_paid:
+            flash("Payment required to download this form.", "warning")
+            return redirect(url_for("review_case", case_id=case_id))
+
+        evidence = Evidence.query.filter_by(case_id=case.id).first()
+        text, _ = extract_text_from_file(evidence.file_path)
+        issue_type = evidence.tag or "general"
+
+        form_info = select_form(issue_type, current_user.province)
+        user_data = {
+            "full_name": current_user.full_name or current_user.email,
+            "address": current_user.address or "N/A",
+            "phone": current_user.phone or "N/A",
+            "province": current_user.province or "ON"
+        }
+        case_data = {
+            "id": case.id,
+            "title": case.title,
+            "description": case.description or "",
+            "tag": evidence.tag or ""
+        }
+
+        docx_path, _ = generate_legal_form(form_info, user_data, case_data)
+        return send_file(docx_path, as_attachment=True)
