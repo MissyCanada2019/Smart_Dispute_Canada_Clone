@@ -6,7 +6,11 @@ from werkzeug.utils import secure_filename
 
 from src.server.models import db, User, Case, Evidence
 from utils.ocr import extract_text_from_file
-from utils.issue_classifier import classify_legal_issue  # this is what you're getting next
+from utils.issue_classifier import classify_legal_issue
+from utils.merit_weight import score_merit
+from utils.form_selector import select_form
+from utils.document_generator import generate_legal_form
+
 
 def register_routes(app):
     @app.route("/")
@@ -74,7 +78,6 @@ def register_routes(app):
         if request.method == "POST":
             case_id = request.form["case_id"]
             tag = request.form.get("tag")
-            notes = request.form.get("notes")
             file = request.files.get("document")
 
             if file:
@@ -83,7 +86,6 @@ def register_routes(app):
                 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
                 file.save(filepath)
 
-                # Save to DB
                 evidence = Evidence(
                     case_id=case_id,
                     user_id=current_user.id,
@@ -94,19 +96,40 @@ def register_routes(app):
                 db.session.add(evidence)
                 db.session.commit()
 
-                # AI Extraction + Classification
-                text, filetype = extract_text_from_file(filepath)
-                if text:
-                    legal_topic, confidence = classify_legal_issue(text, current_user.province)
-                    evidence.tag = legal_topic
-                    db.session.commit()
-                    flash(f"AI classified this as: {legal_topic} (Confidence: {confidence}%)", "info")
-                else:
-                    flash("Could not extract text for AI analysis", "warning")
+                # AI processing
+                text, _ = extract_text_from_file(filepath)
+                legal_topic, confidence = classify_legal_issue(text, current_user.province)
+                evidence.tag = legal_topic
+                db.session.commit()
 
-                flash("File uploaded and analyzed successfully.", "success")
-                return redirect(url_for("dashboard"))
-
-            flash("No file selected", "danger")
+                flash(f"File uploaded. AI classified this as: {legal_topic} ({confidence}% confidence).", "info")
+                return redirect(url_for("review_case", case_id=case_id))
+            else:
+                flash("No file selected", "danger")
 
         return render_template("upload.html", cases=cases)
+
+    @app.route("/review-case/<int:case_id>")
+    @login_required
+    def review_case(case_id):
+        case = Case.query.get_or_404(case_id)
+        evidence = Evidence.query.filter_by(case_id=case.id).first()
+        issue_type = evidence.tag or "general"
+
+        # Score the merit
+        text, _ = extract_text_from_file(evidence.file_path)
+        score_data = score_merit(text, issue_type, province=current_user.province)
+        merit_score = score_data["merit_score"]
+        explanation = "This score reflects how strong your evidence is compared to similar winning cases in Canada."
+
+        # Get form info
+        form_info = select_form(issue_type, current_user.province)
+
+        return render_template("review_case.html", case=case, merit_score=merit_score,
+                               explanation=explanation, form_info=form_info)
+
+    @app.route("/confirm-payment/<int:case_id>", methods=["POST"])
+    @login_required
+    def confirm_payment(case_id):
+        flash("Payment confirmation pending. You'll receive access shortly.", "info")
+        return redirect(url_for("review_case", case_id=case_id))
