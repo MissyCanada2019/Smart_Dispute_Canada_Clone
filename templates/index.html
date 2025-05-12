@@ -1,35 +1,42 @@
-<<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>SmartDispute.ai - Canada's Justice Engine</title>
-    
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4Q6RTK4Q6C"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){ dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-4Q6RTK4Q6C');
-    </script>
+<{% extends "base.html" %}
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <header>
-        <h1>🍁 SmartDispute.ai 🍁</h1>
-    </header>
+{% block title %}Welcome | SmartDispute.ai Canada{% endblock %}
 
-    <main>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="files" multiple required>
-            <button type="submit">Upload & Generate</button>
-        </form>
-    </main>
+{% block content %}
+<div class="container py-5 text-center">
+    <h1 class="display-4 mb-4">Welcome to SmartDispute.ai</h1>
+    <p class="lead mb-4">
+        Canada's Justice Engine — giving power back to the people through AI-powered legal support.
+    </p>
 
-    <footer>
-        Powered by Canadians 🍁
-    </footer>
-</body>
-</html>
+    <div class="d-grid gap-2 col-md-6 mx-auto mt-4">
+        <a href="{{ url_for('register') }}" class="btn btn-danger btn-lg">Create Your Free Account</a>
+        <a href="{{ url_for('about') }}" class="btn btn-outline-light mt-3">Learn How It Works</a>
+    </div>
+</div>
+
+<!-- Feature Highlights -->
+<div class="container mt-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="p-4 bg-dark border rounded">
+                <h5 class="text-danger">Upload Your Documents</h5>
+                <p class="text-muted">Use our secure AI uploader to extract and classify legal issues automatically.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 bg-dark border rounded">
+                <h5 class="text-danger">Score Your Case Merit</h5>
+                <p class="text-muted">See how strong your case is based on Canadian laws, past rulings, and legal logic.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 bg-dark border rounded">
+                <h5 class="text-danger">Generate Legal Forms</h5>
+                <p class="text-muted">Auto-fill official Canadian legal documents for court or tribunal submission.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
