@@ -1,202 +1,39 @@
-/* General Layout */
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #121212;
-  color: #f5f5f5;
-  margin: 0;
-  padding: 0;
+//* Section spacing */
+section,
+.container {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
 }
 
-/* Header */
-header {
-  background: linear-gradient(45deg, #ff0000, #990000);
-  color: white;
-  padding: 2rem;
-  text-align: center;
-  border-bottom: 3px solid #ffeb3b;
+/* Headings */
+h1, h2, h3, h4 {
+  margin-bottom: 1.5rem;
+  font-weight: 600;
 }
 
-header h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.3rem;
-}
-
-header p {
-  font-size: 1.2rem;
-  font-weight: 300;
-}
-
-/* Navigation */
-nav {
-  background-color: #b71c1c;
-}
-
-nav .nav-link {
-  color: #ffffff !important;
-  margin-right: 1rem;
-  transition: all 0.3s ease;
-}
-
-nav .nav-link:hover {
-  color: #ffeb3b !important;
-  text-decoration: underline;
-}
-
-/* Main Content */
-main {
-  padding: 2rem;
-}
-
-/* Forms */
-form input,
-form select,
-form textarea {
-  background-color: #1e1e1e;
-  color: #fff;
-  border: 1px solid #444;
-  padding: 0.75rem;
-  width: 100%;
-  margin-bottom: 1rem;
-  border-radius: 4px;
-}
-
-form button {
-  background-color: #d32f2f;
-  color: #fff;
-  border: none;
-  padding: 0.75rem 2rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-form button:hover {
-  background-color: #ff5252;
-}
-
-/* Alerts */
-.alert {
-  font-size: 0.95rem;
-}
-
-/* Footer */
-footer {
-  background-color: #1c1c1c;
-  color: #bbb;
-  text-align: center;
-  padding: 1rem;
-  margin-top: 2rem;
-  border-top: 1px solid #333;
-}
-
-/* Upload-specific styles */
-input[type="file"] {
-  color: #f5f5f5;
-  border: 1px dashed #888;
-  padding: 1rem;
-  background-color: #1e1e1e;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-  background: #1a1a1a;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-nav a {
-  color: #ffcccb;
-  text-decoration: none;
-  margin: 0 1rem;
-  font-weight: bold;
-}
-
-nav a:hover {
-  color: #ffffff;
-}
-
-/* Intro Section */
-#intro {
-  padding: 3rem;
-  text-align: center;
-  background-color: #181818;
-  border-top: 4px solid #e53935;
-  border-bottom: 4px solid #e53935;
-}
-
-#intro h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #ff5252;
-}
-
-#intro p {
-  font-size: 1.1rem;
-  margin-bottom: 2rem;
-  color: #dddddd;
-}
-
-#intro a {
-  display: inline-block;
-  padding: 0.75rem 2rem;
-  background-color: #e53935;
-  color: white;
-  text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
-#intro a:hover {
-  background-color: #d32f2f;
-}
-
-/* Footer */
-footer {
-  background-color: #1f1f1f;
-  color: #bbb;
-  text-align: center;
+/* Card layout (pricing, testimonials) */
+.card, .pricing-card, .shadow-sm {
   padding: 1.5rem;
-  margin-top: 4rem;
-  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  border-radius: 8px;
 }
 
-/* Buttons */
-button,
+/* Grid gaps */
+.row.g-4 > .col,
+.row.g-3 > .col {
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons spacing */
 .btn {
-  background-color: #e53935;
-  color: white;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
+  margin-top: 0.5rem;
 }
 
-button:hover,
-.btn:hover {
-  background-color: #c62828;
-}
-
-/* Flash Messages */
-.alert {
-  padding: 1rem;
-  margin: 1rem;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
-.alert-success {
-  background-color: #2e7d32;
-  color: white;
-}
-
-.alert-danger {
-  background-color: #c62828;
-  color: white;
-}
-
-.alert-info {
-  background-color: #0277bd;
-  color: white;
+/* Testimonials layout */
+.testimonial {
+  background-color: #1e1e1e;
+  padding: 1.5rem;
+  border-left: 4px solid #e53935;
+  margin-bottom: 1.5rem;
+  border-radius: 6px;
 }
