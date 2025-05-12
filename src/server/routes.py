@@ -14,8 +14,6 @@ from utils.email_utils import send_email
 
 
 def register_routes(app):
-
-    # Basic Pages
     @app.route("/")
     def index():
         return render_template("index.html")
@@ -28,19 +26,45 @@ def register_routes(app):
     def pricing():
         return render_template("pricing.html")
 
-    # Authentication
     @app.route("/register", methods=["GET", "POST"])
     def register():
         if request.method == "POST":
             email = request.form["email"]
             password = request.form["password"]
+            full_name = request.form.get("full_name")
+            address = request.form.get("address")
+            phone = request.form.get("phone")
+            postal_code = request.form.get("postal_code")
+            province = request.form.get("province")
+            subscription_type = request.args.get("plan", "free")
+
+            # Prevent duplicates
             if User.query.filter_by(email=email).first():
-                flash("Email already registered", "danger")
+                flash("Email already registered.", "danger")
                 return redirect(url_for("register"))
-            user = User(email=email, password_hash=generate_password_hash(password))
+
+            # Handle low-income verification upload
+            if subscription_type == "low_income" and "verification_doc" in request.files:
+                file = request.files["verification_doc"]
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    save_dir = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
+                    os.makedirs(save_dir, exist_ok=True)
+                    file.save(os.path.join(save_dir, filename))
+
+            user = User(
+                email=email,
+                password_hash=generate_password_hash(password),
+                full_name=full_name,
+                address=address,
+                phone=phone,
+                postal_code=postal_code,
+                province=province,
+                subscription_type=subscription_type
+            )
             db.session.add(user)
             db.session.commit()
-            flash("Registered successfully!", "success")
+            flash("Account created! Please login.", "success")
             return redirect(url_for("login"))
         return render_template("register.html")
 
@@ -63,7 +87,6 @@ def register_routes(app):
         flash("Logged out", "info")
         return redirect(url_for("login"))
 
-    # Dashboard + Case Upload
     @app.route("/dashboard")
     @login_required
     def dashboard():
@@ -76,8 +99,8 @@ def register_routes(app):
         if request.method == "POST":
             title = request.form["title"]
             description = request.form["description"]
-            new_case = Case(title=title, description=description, user_id=current_user.id)
-            db.session.add(new_case)
+            case = Case(title=title, description=description, user_id=current_user.id)
+            db.session.add(case)
             db.session.commit()
             flash("Case created successfully.", "success")
             return redirect(url_for("upload"))
@@ -86,7 +109,7 @@ def register_routes(app):
     @app.route("/upload", methods=["GET", "POST"])
     @login_required
     def upload():
-        user_cases = Case.query.filter_by(user_id=current_user.id).all()
+        cases = Case.query.filter_by(user_id=current_user.id).all()
         if request.method == "POST":
             case_id = request.form["case_id"]
             file = request.files.get("document")
@@ -97,97 +120,9 @@ def register_routes(app):
                 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
                 file.save(save_path)
 
-                new_evidence = Evidence(case_id=case_id, user_id=current_user.id,
-                                        filename=filename, file_path=save_path)
-                db.session.add(new_evidence)
+                evidence = Evidence(case_id=case_id, user_id=current_user.id,
+                                    filename=filename, file_path=save_path)
+                db.session.add(evidence)
                 db.session.commit()
 
-                text, _ = extract_text_from_file(save_path)
-                legal_tag, confidence = classify_legal_issue(text, current_user.province)
-                new_evidence.tag = legal_tag
-                db.session.commit()
-
-                flash(f"Evidence uploaded and classified as '{legal_tag}' ({confidence}%).", "info")
-                return redirect(url_for("review_case", case_id=case_id))
-            else:
-                flash("No file selected", "danger")
-        return render_template("upload.html", cases=user_cases)
-
-    @app.route("/review-case/<int:case_id>")
-    @login_required
-    def review_case(case_id):
-        case = Case.query.get_or_404(case_id)
-        evidence = Evidence.query.filter_by(case_id=case.id).first()
-        issue_type = evidence.tag or "general"
-        text, _ = extract_text_from_file(evidence.file_path)
-        score_data = score_merit(text, issue_type, current_user.province)
-        form_info = select_form(issue_type, current_user.province)
-
-        return render_template("review_case.html", case=case,
-                               merit_score=score_data["merit_score"],
-                               explanation="Score is based on strength of your uploaded documents.",
-                               form_info=form_info)
-
-    @app.route("/confirm-payment/<int:case_id>", methods=["POST"])
-    @login_required
-    def confirm_payment(case_id):
-        case = Case.query.get_or_404(case_id)
-        send_email(
-            subject="SmartDispute Payment Received",
-            recipient="smartdisputecanada@gmail.com",
-            body=f"Payment received for Case #{case.id} from {current_user.email}"
-        )
-        flash("Payment confirmation sent. Admin will review and unlock your document.", "info")
-        return redirect(url_for("review_case", case_id=case_id))
-
-    # Admin Unlock
-    @app.route("/admin/cases")
-    @login_required
-    def admin_cases():
-        if not current_user.is_admin:
-            flash("Access denied.", "danger")
-            return redirect(url_for("dashboard"))
-        cases = Case.query.filter_by(is_paid=False).all()
-        return render_template("admin_cases.html", cases=cases)
-
-    @app.route("/admin/unlock/<int:case_id>", methods=["POST"])
-    @login_required
-    def admin_unlock_case(case_id):
-        if not current_user.is_admin:
-            flash("Unauthorized", "danger")
-            return redirect(url_for("dashboard"))
-        case = Case.query.get_or_404(case_id)
-        case.is_paid = True
-        db.session.commit()
-        flash(f"Case #{case.id} unlocked for download.", "success")
-        return redirect(url_for("admin_cases"))
-
-    # Final Form Download
-    @app.route("/download-form/<int:case_id>")
-    @login_required
-    def download_form(case_id):
-        case = Case.query.get_or_404(case_id)
-        if not case.is_paid:
-            flash("Please complete payment first.", "warning")
-            return redirect(url_for("review_case", case_id=case_id))
-
-        evidence = Evidence.query.filter_by(case_id=case.id).first()
-        text, _ = extract_text_from_file(evidence.file_path)
-        issue_type = evidence.tag or "general"
-
-        form_info = select_form(issue_type, current_user.province)
-        user_data = {
-            "full_name": current_user.full_name or current_user.email,
-            "address": current_user.address or "N/A",
-            "phone": current_user.phone or "N/A",
-            "province": current_user.province or "ON"
-        }
-        case_data = {
-            "id": case.id,
-            "title": case.title,
-            "description": case.description or "",
-            "tag": evidence.tag or ""
-        }
-
-        docx_path, _ = generate_legal_form(form_info, user_data, case_data)
-        return send_file(docx_path, as_attachment=True)
+                text, _ = extract_text_from_file
