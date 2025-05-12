@@ -1,8 +1,8 @@
 import os
 from flask import request, render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from src.server.models import db, User, Case, Evidence
 from utils.ocr import extract_text_from_file
@@ -10,6 +10,7 @@ from utils.issue_classifier import classify_legal_issue
 from utils.merit_weight import score_merit
 from utils.form_selector import select_form
 from utils.document_generator import generate_legal_form
+from utils.email_utils import send_email
 
 
 def register_routes(app):
@@ -25,11 +26,10 @@ def register_routes(app):
             if User.query.filter_by(email=email).first():
                 flash("Email already registered", "danger")
                 return redirect(url_for("register"))
-            hashed_pw = generate_password_hash(password)
-            user = User(email=email, password=hashed_pw)
+            user = User(email=email, password=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
-            flash("Registration successful", "success")
+            flash("Registered successfully!", "success")
             return redirect(url_for("login"))
         return render_template("register.html")
 
@@ -55,8 +55,8 @@ def register_routes(app):
     @app.route("/dashboard")
     @login_required
     def dashboard():
-        user_cases = Case.query.filter_by(user_id=current_user.id).all()
-        return render_template("dashboard.html", cases=user_cases)
+        cases = Case.query.filter_by(user_id=current_user.id).all()
+        return render_template("dashboard.html", cases=cases)
 
     @app.route("/create-case", methods=["GET", "POST"])
     @login_required
@@ -67,14 +67,14 @@ def register_routes(app):
             new_case = Case(title=title, description=description, user_id=current_user.id)
             db.session.add(new_case)
             db.session.commit()
-            flash("Case created successfully", "success")
+            flash("Case created successfully.", "success")
             return redirect(url_for("upload"))
         return render_template("create_case.html")
 
     @app.route("/upload", methods=["GET", "POST"])
     @login_required
     def upload():
-        cases = Case.query.filter_by(user_id=current_user.id).all()
+        user_cases = Case.query.filter_by(user_id=current_user.id).all()
         if request.method == "POST":
             case_id = request.form["case_id"]
             tag = request.form.get("tag")
@@ -82,32 +82,31 @@ def register_routes(app):
 
             if file:
                 filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-                file.save(filepath)
+                file.save(save_path)
 
-                evidence = Evidence(
+                new_evidence = Evidence(
                     case_id=case_id,
                     user_id=current_user.id,
                     filename=filename,
-                    file_path=filepath,
+                    file_path=save_path,
                     tag=tag
                 )
-                db.session.add(evidence)
+                db.session.add(new_evidence)
                 db.session.commit()
 
-                # AI processing
-                text, _ = extract_text_from_file(filepath)
-                legal_topic, confidence = classify_legal_issue(text, current_user.province)
-                evidence.tag = legal_topic
+                text, _ = extract_text_from_file(save_path)
+                legal_tag, confidence = classify_legal_issue(text, current_user.province)
+                new_evidence.tag = legal_tag
                 db.session.commit()
 
-                flash(f"File uploaded. AI classified this as: {legal_topic} ({confidence}% confidence).", "info")
+                flash(f"Evidence uploaded. AI classified issue as '{legal_tag}' ({confidence}%).", "info")
                 return redirect(url_for("review_case", case_id=case_id))
             else:
                 flash("No file selected", "danger")
 
-        return render_template("upload.html", cases=cases)
+        return render_template("upload.html", cases=user_cases)
 
     @app.route("/review-case/<int:case_id>")
     @login_required
@@ -115,14 +114,12 @@ def register_routes(app):
         case = Case.query.get_or_404(case_id)
         evidence = Evidence.query.filter_by(case_id=case.id).first()
         issue_type = evidence.tag or "general"
-
-        # Score the merit
         text, _ = extract_text_from_file(evidence.file_path)
-        score_data = score_merit(text, issue_type, province=current_user.province)
+
+        score_data = score_merit(text, issue_type, current_user.province)
         merit_score = score_data["merit_score"]
         explanation = "This score reflects how strong your evidence is compared to similar winning cases in Canada."
 
-        # Get form info
         form_info = select_form(issue_type, current_user.province)
 
         return render_template("review_case.html", case=case, merit_score=merit_score,
@@ -131,5 +128,13 @@ def register_routes(app):
     @app.route("/confirm-payment/<int:case_id>", methods=["POST"])
     @login_required
     def confirm_payment(case_id):
-        flash("Payment confirmation pending. You'll receive access shortly.", "info")
+        case = Case.query.get_or_404(case_id)
+        send_email(
+            subject="SmartDispute Payment Received",
+            recipient="smartdisputecanada@gmail.com",
+            body=f"Payment received for Case ID {case.id} from user {current_user.email}.\nUnlock form if confirmed."
+        )
+        flash("Payment confirmation sent. We'll unlock your form once verified.", "info")
         return redirect(url_for("review_case", case_id=case_id))
+
+    # TODO: Add admin unlock endpoint here
