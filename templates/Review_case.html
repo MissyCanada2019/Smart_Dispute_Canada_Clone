@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="text-danger mb-3">Review Your Case</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Case Title: {{ case.title }}</h5>
+            <p><strong>Matched Court:</strong> {{ form_info.court }}</p>
+            <p><strong>Form:</strong> {{ form_info.form_name }}</p>
+            <p><strong>Merit Score:</strong> {{ merit_score }}%</p>
+            <p class="text-muted">{{ explanation }}</p>
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        <strong>Unlock Your Legal Form</strong><br>
+        A $9.99 flat fee is required to download your completed legal document.<br><br>
+        Send your payment via:<br>
+        <strong>PayPal or E-transfer to: smartdisputecanada@gmail.com</strong>
+    </div>
+
+    <form method="POST" action="{{ url_for('confirm_payment', case_id=case.id) }}">
+        <button type="submit" class="btn btn-danger" disabled>Download Form (Locked)</button>
+        <small class="d-block text-muted mt-2">Your form will unlock once payment is confirmed.</small>
+    </form>
+</div>
+{% endblock %}
