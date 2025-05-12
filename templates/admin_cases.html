@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h3 class="mb-3 text-danger">Pending Payment Confirmations</h3>
+    {% if cases %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Title</th>
+                    <th>User</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                    <tr>
+                        <td>{{ case.id }}</td>
+                        <td>{{ case.title }}</td>
+                        <td>{{ case.user.email }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('admin_unlock_case', case_id=case.id) }}">
+                                <button class="btn btn-success btn-sm">Mark as Paid</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No unpaid cases found.</p>
+    {% endif %}
+</div>
+{% endblock %}
