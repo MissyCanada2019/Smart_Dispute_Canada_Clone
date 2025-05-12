@@ -1,13 +1,12 @@
 {% extends "base.html" %}
-
 {% block content %}
 <div class="container mt-5">
     <h3 class="text-danger mb-3">Review Your Case</h3>
 
     <div class="card mb-4">
         <div class="card-body">
-            <h5>Case Title: {{ case.title }}</h5>
-            <p><strong>Matched Court:</strong> {{ form_info.court }}</p>
+            <h5>Case: {{ case.title }}</h5>
+            <p><strong>Court:</strong> {{ form_info.court }}</p>
             <p><strong>Form:</strong> {{ form_info.form_name }}</p>
             <p><strong>Merit Score:</strong> {{ merit_score }}%</p>
             <p class="text-muted">{{ explanation }}</p>
@@ -15,15 +14,45 @@
     </div>
 
     <div class="alert alert-warning">
-        <strong>Unlock Your Legal Form</strong><br>
-        A $9.99 flat fee is required to download your completed legal document.<br><br>
-        Send your payment via:<br>
-        <strong>PayPal or E-transfer to: smartdisputecanada@gmail.com</strong>
+        <strong>Unlock Your Legal Form ($9.99)</strong><br>
+        Pay securely by PayPal or send an e-transfer to: <br>
+        <strong>smartdisputecanada@gmail.com</strong>
+    </div>
+
+    <div class="mb-3">
+        <div id="paypal-button-container"></div>
     </div>
 
     <form method="POST" action="{{ url_for('confirm_payment', case_id=case.id) }}">
-        <button type="submit" class="btn btn-danger" disabled>Download Form (Locked)</button>
-        <small class="d-block text-muted mt-2">Your form will unlock once payment is confirmed.</small>
+        <button type="submit" class="btn btn-secondary">I Paid by E-Transfer</button>
     </form>
 </div>
+
+<!-- PayPal Smart Button Script -->
+<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=CAD"></script>
+<script>
+    paypal.Buttons({
+        style: {
+            layout: 'horizontal',
+            color:  'blue',
+            shape:  'rect',
+            label:  'pay'
+        },
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: { value: '9.99' }
+                }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                alert('Payment completed by ' + details.payer.name.given_name);
+                fetch('{{ url_for("confirm_payment", case_id=case.id) }}', {
+                    method: 'POST'
+                }).then(() => window.location.reload());
+            });
+        }
+    }).render('#paypal-button-container');
+</script>
 {% endblock %}
