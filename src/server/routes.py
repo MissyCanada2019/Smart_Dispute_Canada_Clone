@@ -137,4 +137,12 @@ def register_routes(app):
         flash("Payment confirmation sent. We'll unlock your form once verified.", "info")
         return redirect(url_for("review_case", case_id=case_id))
 
-    # TODO: Add admin unlock endpoint here
+    @app.route("/admin/cases")
+@login_required
+def admin_cases():
+    if not current_user.is_admin:
+        flash("Access denied", "danger")
+        return redirect(url_for("dashboard"))
+
+    unpaid_cases = Case.query.filter_by(is_paid=False).all()
+    return render_template("admin_cases.html", cases=unpaid_cases)# TODO: Add admin unlock endpoint here
