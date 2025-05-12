@@ -12,7 +12,6 @@ from utils.form_selector import select_form
 from utils.document_generator import generate_legal_form
 from utils.email_utils import send_email
 
-
 def register_routes(app):
     @app.route("/")
     def index():
@@ -38,19 +37,18 @@ def register_routes(app):
             province = request.form.get("province")
             subscription_type = request.args.get("plan", "free")
 
-            # Prevent duplicates
             if User.query.filter_by(email=email).first():
                 flash("Email already registered.", "danger")
                 return redirect(url_for("register"))
 
-            # Handle low-income verification upload
+            # Optional file upload (for low-income verification)
             if subscription_type == "low_income" and "verification_doc" in request.files:
                 file = request.files["verification_doc"]
                 if file and file.filename:
                     filename = secure_filename(file.filename)
-                    save_dir = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
-                    os.makedirs(save_dir, exist_ok=True)
-                    file.save(os.path.join(save_dir, filename))
+                    folder = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
+                    os.makedirs(folder, exist_ok=True)
+                    file.save(os.path.join(folder, filename))
 
             user = User(
                 email=email,
@@ -66,6 +64,7 @@ def register_routes(app):
             db.session.commit()
             flash("Account created! Please login.", "success")
             return redirect(url_for("login"))
+
         return render_template("register.html")
 
     @app.route("/login", methods=["GET", "POST"])
@@ -113,7 +112,6 @@ def register_routes(app):
         if request.method == "POST":
             case_id = request.form["case_id"]
             file = request.files.get("document")
-
             if file:
                 filename = secure_filename(file.filename)
                 save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -125,4 +123,24 @@ def register_routes(app):
                 db.session.add(evidence)
                 db.session.commit()
 
-                text, _ = extract_text_from_file
+                # AI analysis
+                text, _ = extract_text_from_file(save_path)
+                legal_issue = classify_legal_issue(text)
+                merit_score = score_merit(text, legal_issue)
+                form = select_form(legal_issue, current_user.province)
+
+                flash(f"Evidence uploaded. Case scored {merit_score}% merit. Suggested form: {form}", "info")
+                return redirect(url_for("review_case", case_id=case_id))
+        return render_template("upload.html", cases=cases)
+
+    @app.route("/review/<int:case_id>")
+    @login_required
+    def review_case(case_id):
+        case = Case.query.get_or_404(case_id)
+        return render_template("review_case.html", case=case)
+
+    @app.route("/pay-etf/<int:case_id>")
+    @login_required
+    def pay_etf(case_id):
+        case = Case.query.get_or_404(case_id)
+        return render_template("pay_etf.html", case=case)
