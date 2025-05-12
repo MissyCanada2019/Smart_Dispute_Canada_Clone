@@ -1,96 +1,45 @@
-# utils/issue_classifier.py
-
 import re
 
-# Base legal keywords mapped to categories
+# Example keyword maps (expand this later for better accuracy)
 LEGAL_ISSUE_KEYWORDS = {
-    "repair": "Landlord-Tenant Dispute",
-    "maintenance": "Landlord-Tenant Dispute",
-    "mold": "Landlord-Tenant Dispute",
-    "eviction": "Landlord-Tenant Dispute",
-    "n4 notice": "Landlord-Tenant Dispute",
-    "credit": "Credit Report Error",
-    "equifax": "Credit Report Error",
-    "transunion": "Credit Report Error",
-    "wrong account": "Credit Report Error",
-    "human rights": "Human Rights Complaint",
-    "discrimination": "Human Rights Complaint",
-    "accommodation": "Human Rights Complaint",
-    "rent": "Landlord-Tenant Dispute",
-    "quiet enjoyment": "Landlord-Tenant Dispute",
-    "small claims": "Small Claims",
-    "damage": "Small Claims",
-    "contract": "Small Claims",
-    "refund": "Small Claims",
-    "police": "Police Misconduct",
-    "harassment": "Police Misconduct",
-    "cas": "Child Protection (CAS)",
-    "child protection": "Child Protection (CAS)",
+    "tenant": ["landlord", "eviction", "rent", "lease", "repairs", "LTB"],
+    "family": ["custody", "divorce", "child support", "spousal", "parenting"],
+    "employment": ["wrongful dismissal", "severance", "contract", "harassment", "fired"],
+    "human_rights": ["discrimination", "racism", "accommodation", "disability", "bias"],
+    "credit": ["equifax", "transunion", "credit report", "inquiry", "debt", "collections"],
+    "small_claims": ["breach", "contract", "damage", "unpaid", "refund"],
+    "criminal": ["theft", "assault", "charges", "police", "arrest", "bail"]
 }
 
-# Province-specific legal triggers (can be expanded)
-PROVINCE_ISSUE_TRIGGERS = {
-    "ON": {  # Ontario
-        "ltb": "Landlord-Tenant Dispute",
-        "form n4": "Landlord-Tenant Dispute",
-        "rta": "Landlord-Tenant Dispute",  # Residential Tenancies Act
-        "hrto": "Human Rights Complaint",
-        "form c": "Child Protection (CAS)"
+PROVINCE_RULES = {
+    "ON": {
+        "tenant": "Landlord and Tenant Board",
+        "family": "Ontario Family Court",
+        "employment": "Ontario Labour Relations Board",
+        "human_rights": "Ontario Human Rights Tribunal"
     },
     "BC": {
-        "rtb": "Landlord-Tenant Dispute",  # Residential Tenancy Branch
-        "bc human rights": "Human Rights Complaint",
-        "form g": "Child Protection (CAS)"
+        "tenant": "BC Residential Tenancy Branch",
+        "family": "BC Family Court",
+        "employment": "WorkSafeBC / Labour Relations Board",
+        "human_rights": "BC Human Rights Tribunal"
     },
-    "AB": {
-        "residential tenancies act": "Landlord-Tenant Dispute",
-        "saform": "Child Protection (CAS)"
-    },
-    "QC": {
-        "regie du logement": "Landlord-Tenant Dispute",
-        "commission des droits": "Human Rights Complaint"
-    },
-    # Add more provinces and phrases here
+    # Add more provinces here as needed
 }
 
+def classify_legal_issue(text, province="ON"):
+    text = text.lower()
+    match_scores = {}
 
-def extract_legal_issues(text, province_code="ON"):
-    """
-    Scan document for general and province-specific keywords.
+    for issue, keywords in LEGAL_ISSUE_KEYWORDS.items():
+        count = sum(1 for word in keywords if word in text)
+        match_scores[issue] = count
 
-    Args:
-        text (str): Full OCR or uploaded text.
-        province_code (str): Province abbreviation like 'ON', 'BC', etc.
+    # Determine best match
+    top_issue = max(match_scores, key=match_scores.get)
+    confidence = round((match_scores[top_issue] / max(len(LEGAL_ISSUE_KEYWORDS[top_issue]), 1)) * 100)
 
-    Returns:
-        dict: {
-            'issues': set of issue categories,
-            'form_triggers': list of strings (triggered forms),
-            'keywords_found': list of matched keywords
-        }
-    """
-    detected_issues = set()
-    form_triggers = []
-    keywords_found = []
+    # Determine where to file (if known)
+    filing_body = PROVINCE_RULES.get(province.upper(), {}).get(top_issue, "General Civil Court")
 
-    cleaned_text = re.sub(r'[^\w\s]', '', text.lower())
-
-    # Base keyword matching
-    for keyword, category in LEGAL_ISSUE_KEYWORDS.items():
-        if keyword in cleaned_text:
-            detected_issues.add(category)
-            keywords_found.append(keyword)
-
-    # Province-specific matching
-    province_keywords = PROVINCE_ISSUE_TRIGGERS.get(province_code.upper(), {})
-    for keyword, category in province_keywords.items():
-        if keyword in cleaned_text:
-            detected_issues.add(category)
-            form_triggers.append(keyword)
-            keywords_found.append(keyword)
-
-    return {
-        "issues": detected_issues,
-        "form_triggers": form_triggers,
-        "keywords_found": keywords_found
-    }
+    return f"{top_issue.replace('_', ' ').title()} ({filing_body})", confidence
