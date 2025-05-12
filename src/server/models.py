@@ -33,15 +33,17 @@ class Case(db.Model):
     payments = db.relationship('Payment', backref='case', lazy=True)
 
 
-class Evidence(db.Model):
+class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('case.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    filename = db.Column(db.String(200), nullable=False)
-    file_path = db.Column(db.String(300), nullable=False)
-    tag = db.Column(db.String(100))
-    uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    is_paid = db.Column(db.Boolean, default=False)  # <-- add this line
+
+    evidence = db.relationship('Evidence', backref='case', lazy=True)
+    payments = db.relationship('Payment', backref='case', lazy=True)
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
