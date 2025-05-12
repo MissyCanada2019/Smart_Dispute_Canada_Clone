@@ -1,26 +1,18 @@
-{% extends "base.html" %}
-
-{% block title %}Welcome to SmartDispute Canada{% endblock %}
-
-{% block content %}
-<!-- Hero Banner (uses a stable external Canadian flag) -->
-<section class="text-center text-white p-5" 
-         style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/c/cf/Canadian_flag.png'); 
-                background-size: cover; 
-                background-position: center;">
-  <div style="background-color: rgba(0, 0, 0, 0.6); padding: 3rem;">
-    <h1 class="display-4">SmartDispute.ai Canada</h1>
-    <p class="lead">Helping Canadians fight back with AI-powered legal tools.</p>
-    <a href="/register" class="btn btn-light btn-lg mt-3">Get Started</a>
-  </div>
-</section>
-
-<!-- About Section -->
-<section class="bg-light p-5">
-  <div class="container text-center">
-    <h2>About Us</h2>
-    <p class="lead">SmartDispute was founded by real Canadians who experienced the injustice of being unheard in court, ignored by housing authorities, and overlooked by the system.</p>
-    <p>We’re here to flip the script. Upload your documents, get your merit score, and let the law work for you — without needing a lawyer.</p>
-  </div>
-</section>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartDispute.ai - Canada's Justice Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header><h1>🍁 SmartDispute.ai 🍁</h1></header>
+    <main>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="files" multiple>
+            <button type="submit">Upload & Generate</button>
+        </form>
+    </main>
+    <footer>Powered by Canadians 🍁</footer>
+</body>
+</html>
