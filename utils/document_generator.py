@@ -1,46 +1,53 @@
-# utils/document_generator.py
-
 import os
 from docx import Document
 
-# Optional: fallback converter
-try:
-    import pypandoc
-except ImportError:
-    pypandoc = None
-
-# Primary converter
 try:
     from docx2pdf import convert as docx2pdf_convert
 except ImportError:
     docx2pdf_convert = None
 
-def generate_legal_form(issue_category, province, user_data, case_id):
+try:
+    import pypandoc
+except ImportError:
+    pypandoc = None
+
+def generate_legal_form(form_info, user_data, case_data):
     """
-    Generate a .docx and .pdf legal form customized with user details.
+    Fill and export a form based on user/case info.
+
+    Args:
+        form_info (dict): from form_selector (form_file, court, name, notes)
+        user_data (dict): from User model (name, phone, etc.)
+        case_data (dict): from Case or Evidence (title, issue, AI tags)
 
     Returns:
-        tuple: (docx_path, pdf_path or None)
+        tuple: (filled_docx_path, filled_pdf_path or None)
     """
-    # Normalize issue for file naming
-    issue_slug = issue_category.replace(" ", "_").lower()
-    template_path = f"templates/forms/{province}/{issue_slug}.docx"
+    form_file = form_info.get("form_file")
+    province = user_data.get("province", "ON")
+    template_path = os.path.join("templates", "forms", province, form_file)
+
     if not os.path.exists(template_path):
-        template_path = "templates/forms/base_form.docx"
+        print(f"Template not found at: {template_path}, using fallback.")
+        template_path = os.path.join("templates", "forms", "base_form.docx")
 
-    # Load and fill document
     doc = Document(template_path)
-    for para in doc.paragraphs:
-        for key, val in user_data.items():
-            para.text = para.text.replace(f"[{key}]", str(val))
 
-    # Save filled docx
+    # Replace placeholders in paragraphs
+    for para in doc.paragraphs:
+        for key, val in {**user_data, **case_data}.items():
+            placeholder = f"[{key.upper()}]"
+            if placeholder in para.text:
+                para.text = para.text.replace(placeholder, str(val))
+
+    # Save output DOCX
     output_dir = "generated_forms"
     os.makedirs(output_dir, exist_ok=True)
-    docx_path = os.path.join(output_dir, f"case_{case_id}_form.docx")
+    output_name = f"case_{case_data.get('id')}_{form_file}"
+    docx_path = os.path.join(output_dir, output_name)
     doc.save(docx_path)
 
-    # Attempt PDF conversion
+    # Try converting to PDF
     pdf_path = docx_path.replace(".docx", ".pdf")
     try:
         if docx2pdf_convert:
@@ -48,9 +55,10 @@ def generate_legal_form(issue_category, province, user_data, case_id):
         elif pypandoc:
             pypandoc.convert_file(docx_path, "pdf", outputfile=pdf_path)
         else:
-            raise RuntimeError("No available PDF converter.")
+            print("PDF conversion not supported.")
+            pdf_path = None
     except Exception as e:
-        print(f"PDF conversion failed: {e}")
+        print(f"PDF conversion error: {e}")
         pdf_path = None
 
     return docx_path, pdf_path
