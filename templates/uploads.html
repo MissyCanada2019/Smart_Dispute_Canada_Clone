@@ -15,27 +15,37 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('uploads') }}">
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}">
         <div class="mb-3">
             <label for="case_id" class="form-label">Select Case</label>
             <select name="case_id" id="case_id" class="form-select" required>
-                {% for case in cases %}
-                    <option value="{{ case.id }}">{{ case.title }}</option>
-                {% endfor %}
+                {% if cases %}
+                    {% for case in cases %}
+                        <option value="{{ case.id }}">{{ case.title }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option disabled selected>No cases found. Please create one first.</option>
+                {% endif %}
             </select>
         </div>
 
         <div class="mb-3">
-            <label for="document" class="form-label">Upload Document</label>
-            <input type="file" name="document" class="form-control" required>
+            <label for="document" class="form-label">Upload File (PDF, DOCX, JPG, PNG, etc.)</label>
+            <input type="file" name="document" id="document" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.rtf,.csv,.xls,.xlsx" required>
+            <div class="form-text">Max size: 100MB</div>
         </div>
 
         <div class="mb-3">
-            <label for="tag" class="form-label">Tag (optional)</label>
-            <input type="text" name="tag" class="form-control" placeholder="e.g., Lease Agreement, Evidence Photo">
+            <label for="tag" class="form-label">Optional Tag</label>
+            <input type="text" name="tag" class="form-control" placeholder="e.g., Lease Agreement, Medical Report">
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Upload Evidence</button>
+        <div class="mb-3">
+            <label for="notes" class="form-label">Additional Notes (Optional)</label>
+            <textarea name="notes" class="form-control" rows="4" placeholder="Describe this file, how it connects to your case, or any important context..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-danger w-100">Submit Evidence</button>
     </form>
 </div>
 {% endblock %}
