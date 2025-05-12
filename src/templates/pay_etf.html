@@ -2,20 +2,55 @@
 {% block title %}Complete Payment | SmartDispute.ai{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-3">Complete Your Payment</h2>
-    <p class="lead">You're one step away from unlocking your AI-generated legal package.</p>
+<div class="container">
+    <h2>Finish Your Payment</h2>
+    <p class="lead">You're just one step away from generating your legal package for:</p>
+    <h4 class="text-info">{{ case.title }}</h4>
 
-    <div class="alert alert-warning my-4">
-        Please send an Interac e-Transfer of <strong>$5.99 CAD</strong> to:  
-        <br>
-        <strong>smartdisputecanada@gmail.com</strong>
-        <br><br>
-        In the message, include: <strong>Your Case ID ({{ case.id }})</strong> or full name.
-    </div>
+    <hr>
 
-    <p>Once we receive your payment, your download will be unlocked on your dashboard.</p>
+    <p>Please send an e-transfer of <strong>$5.99 CAD</strong> to:</p>
+    <h5><strong>smartdisputecanada@gmail.com</strong></h5>
 
-    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light mt-4">Return to Dashboard</a>
-</div>
-{% endblock %}
+    <p>Include your <strong>Case ID: {{ case.id }}</strong> or your full name in the
+
+Yes — here's exactly what to do:
+
+---
+
+### **1. Create a new file:**
+
+**Path:**  
+`src/server/admin_routes.py`
+
+**Contents:**  
+Paste the following into that file:
+
+```python
+from flask import render_template, redirect, url_for, flash, request
+from flask_login import login_required, current_user
+from src.server.models import db, Case
+
+def register_admin_routes(app):
+    @app.route('/admin/cases')
+    @login_required
+    def admin_cases():
+        if not current_user.is_admin:
+            flash("Access denied", "danger")
+            return redirect(url_for("dashboard"))
+
+        unpaid_cases = Case.query.filter_by(is_paid=False).all()
+        return render_template("admin_cases.html", cases=unpaid_cases)
+
+    @app.route('/admin/unlock/<int:case_id>', methods=["POST"])
+    @login_required
+    def admin_unlock_case(case_id):
+        if not current_user.is_admin:
+            flash("Unauthorized", "danger")
+            return redirect(url_for("dashboard"))
+
+        case = Case.query.get_or_404(case_id)
+        case.is_paid = True
+        db.session.commit()
+        flash(f"Case {case.id} marked as paid and unlocked.", "success")
+        return redirect(url_for("admin_cases"))
