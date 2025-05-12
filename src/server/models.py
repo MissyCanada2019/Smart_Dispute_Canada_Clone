@@ -21,26 +21,13 @@ class User(UserMixin, db.Model):
     evidence = db.relationship('Evidence', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)
 
-
 class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    evidence = db.relationship('Evidence', backref='case', lazy=True)
-    payments = db.relationship('Payment', backref='case', lazy=True)
-
-
-class Case(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    title = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    is_paid = db.Column(db.Boolean, default=False)  # <-- add this line
+    is_paid = db.Column(db.Boolean, default=False)
 
     evidence = db.relationship('Evidence', backref='case', lazy=True)
     payments = db.relationship('Payment', backref='case', lazy=True)
