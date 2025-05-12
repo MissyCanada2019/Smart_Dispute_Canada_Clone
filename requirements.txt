@@ -18,3 +18,4 @@ pytesseract
 openai
 beautifulsoup4
 lxml
+flask-mail
