@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Create a New Case</h2>
-<form method="POST">
-    <input type="text" name="title" class="form-control mb-2" placeholder="Case Title" required>
-    <textarea name="description" class="form-control mb-3" placeholder="Case Description (optional)"></textarea>
-    <button type="submit" class="btn btn-primary">Create Case</button>
-</form>
+<div class="container mt-5">
+  <h2 class="text-danger mb-4">Create New Case</h2>
+  <form method="POST">
+    <div class="mb-3">
+      <label for="title" class="form-label">Case Title</label>
+      <input type="text" name="title" id="title" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Case Description</label>
+      <textarea name="description" id="description" class="form-control" rows="4"></textarea>
+    </div>
+    <button type="submit" class="btn btn-danger w-100">Create Case</button>
+  </form>
+</div>
 {% endblock %}
