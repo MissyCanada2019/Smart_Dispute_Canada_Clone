@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -6,8 +7,12 @@ from flask_migrate import Migrate
 
 from src.server.models import db, User
 from src.server.routes import register_routes
+from src.server.admin_routes import register_admin_routes
+
+load_dotenv()  # Load environment variables from .env
 
 login_manager = LoginManager()
+login_manager.login_view = 'login'  # Where to redirect if not logged in
 
 def create_app():
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -18,24 +23,26 @@ def create_app():
         template_folder=os.path.join(base_dir, '..', 'templates')
     )
 
-    # App Config
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-key")
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3")
+    # Core Config
+    app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "default-secret-key")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///site.db")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(base_dir, '..', 'uploads')
-    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # Max 100 MB uploads
 
-    # Extensions
+    # Initialize Flask Extensions
     db.init_app(app)
     Migrate(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'login'
 
+    # User session loader
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # Register Blueprints or Direct Routes
     register_routes(app)
+    register_admin_routes(app)
 
     # Ensure upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
