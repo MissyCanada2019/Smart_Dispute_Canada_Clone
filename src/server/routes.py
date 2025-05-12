@@ -1,7 +1,13 @@
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from src.server.models import db, Case
 
 def register_routes(app):
+    # Homepage Route
+    @app.route("/", methods=["GET"])
+    def index():
+        return render_template("index.html")  # Make sure templates/index.html exists
+
+    # CanLII Keyword Search (Mocked)
     @app.route("/canlii-search", methods=["POST"])
     def canlii_search():
         keyword = request.form.get("keyword")
@@ -11,6 +17,7 @@ def register_routes(app):
         }]
         return jsonify(results)
 
+    # Save a Legal Case to DB
     @app.route("/save-case", methods=["POST"])
     def save_case():
         title = request.form["title"]
@@ -20,7 +27,8 @@ def register_routes(app):
         db.session.commit()
         return "Saved"
 
+    # Dashboard View
     @app.route("/dashboard", methods=["GET"])
     def dashboard():
         cases = Case.query.all()
-        return jsonify([{"title": c.title, "url": c.url} for c in cases])
+        return render_template("dashboard.html", cases=cases)  # Ensure dashboard.html exists
