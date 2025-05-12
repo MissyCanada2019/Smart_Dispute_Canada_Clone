@@ -12,11 +12,18 @@ from utils.form_selector import select_form
 from utils.document_generator import generate_legal_form
 from utils.email_utils import send_email
 
-
 def register_routes(app):
     @app.route("/")
     def index():
         return render_template("index.html")
+
+    @app.route("/about")
+    def about():
+        return render_template("about.html")
+
+    @app.route("/pricing")
+    def pricing():
+        return render_template("pricing.html")
 
     @app.route("/register", methods=["GET", "POST"])
     def register():
@@ -26,7 +33,7 @@ def register_routes(app):
             if User.query.filter_by(email=email).first():
                 flash("Email already registered", "danger")
                 return redirect(url_for("register"))
-            user = User(email=email, password=generate_password_hash(password))
+            user = User(email=email, password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
             flash("Registered successfully!", "success")
@@ -39,7 +46,7 @@ def register_routes(app):
             email = request.form["email"]
             password = request.form["password"]
             user = User.query.filter_by(email=email).first()
-            if user and check_password_hash(user.password, password):
+            if user and check_password_hash(user.password_hash, password):
                 login_user(user)
                 return redirect(url_for("dashboard"))
             flash("Invalid credentials", "danger")
@@ -143,7 +150,6 @@ def register_routes(app):
         if not current_user.is_admin:
             flash("Access denied", "danger")
             return redirect(url_for("dashboard"))
-
         unpaid_cases = Case.query.filter_by(is_paid=False).all()
         return render_template("admin_cases.html", cases=unpaid_cases)
 
