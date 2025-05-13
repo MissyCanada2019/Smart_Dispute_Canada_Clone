@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
-from src.server.models import db, User
+from src.models import db, User
 from src.server.routes import register_routes
 from src.server.admin_routes import register_admin_routes
 
