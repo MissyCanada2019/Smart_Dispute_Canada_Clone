@@ -2,6 +2,6 @@ services:
   - type: web
     name: smartdispute-ai
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn run:app"
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
     plan: free
