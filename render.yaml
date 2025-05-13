@@ -3,5 +3,5 @@ services:
     name: smartdispute-ai
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn "src.server:create_app()"
+        startCommand: gunicorn src.server:create_app
     plan: free
