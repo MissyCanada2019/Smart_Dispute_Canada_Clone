@@ -41,7 +41,6 @@ def register_routes(app):
                 flash("Email already registered.", "danger")
                 return redirect(url_for("register"))
 
-            # Optional file upload (for low-income verification)
             if subscription_type == "low_income" and "verification_doc" in request.files:
                 file = request.files["verification_doc"]
                 if file and file.filename:
@@ -123,7 +122,6 @@ def register_routes(app):
                 db.session.add(evidence)
                 db.session.commit()
 
-                # AI analysis
                 text, _ = extract_text_from_file(save_path)
                 legal_issue = classify_legal_issue(text)
                 merit_score = score_merit(text, legal_issue)
@@ -144,3 +142,33 @@ def register_routes(app):
     def pay_etf(case_id):
         case = Case.query.get_or_404(case_id)
         return render_template("pay_etf.html", case=case)
+
+    @app.route("/generate-form/<int:case_id>")
+    @login_required
+    def generate_form(case_id):
+        case = Case.query.get_or_404(case_id)
+        evidence = Evidence.query.filter_by(case_id=case_id).first()
+
+        if not evidence:
+            flash("No evidence found for this case.", "warning")
+            return redirect(url_for("dashboard"))
+
+        form_path = generate_legal_form(case, evidence)
+
+        subject = f"Your Legal Form for Case: {case.title}"
+        body = f"Hi {current_user.full_name},\n\nYour legal document for '{case.title}' is attached.\n\n– SmartDispute.ai"
+
+        try:
+            send_email(
+                to_email=current_user.email,
+                subject=subject,
+                body=body,
+                attachment_path=form_path
+            )
+            flash("Legal form generated and emailed to you successfully.", "success")
+        except Exception as e:
+            flash(f"Form generated, but email failed: {e}", "danger")
+
+        return send_file(form_path, as_attachment=True)
+
+    return app
