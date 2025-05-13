@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from src.server.models import db, User, Case, Evidence
+from src.models import db, User, Case, Evidence
 from utils.ocr import extract_text_from_file
 from utils.issue_classifier import classify_legal_issue
 from utils.merit_weight import score_merit
