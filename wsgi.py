@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from datetime import datetime
 import os
 import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Ensure the 'server' directory is importable
 sys.path.append(os.path.join(os.path.dirname(__file__), 'server'))
@@ -26,7 +27,7 @@ db.init_app(app)
 login_manager.init_app(app)
 
 # Models
-from models import User
+from src.models import User
 
 @login_manager.user_loader
 def load_user(user_id):
