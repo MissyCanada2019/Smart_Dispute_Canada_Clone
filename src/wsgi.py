@@ -39,6 +39,5 @@ def inject_now():
     return {'now': datetime.utcnow()}
 
 # Required for Gunicorn
-gunicorn wsgi:app
-app = app
+startCommand: gunicorn wsgi:app
 
