@@ -2,7 +2,7 @@ import sys
 import os
 
 # Make sure 'server' folder is on the path
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "server")))
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
