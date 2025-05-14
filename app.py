@@ -18,23 +18,23 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 login_manager.init_app(app)
 
-# Import User model for login
-from src.server.models import User  # fixed import
+# Import User model from models.py in src/
+from models import User
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Register routes
-from src.server.routes import register_routes                # fixed
-from src.server.admin_routes import register_admin_routes    # fixed
-from src.server.legal_help import legal_help_bp              # fixed
+from server.routes import register_routes
+from server.admin_routes import register_admin_routes
+from server.legal_help import legal_help_bp
 
 app = register_routes(app)
 app = register_admin_routes(app)
 app.register_blueprint(legal_help_bp)
 
-# Inject `now()` for template use
+# Jinja `now()` helper
 @app.context_processor
 def inject_now():
     return {'now': datetime.utcnow()}
