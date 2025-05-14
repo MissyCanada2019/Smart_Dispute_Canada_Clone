@@ -19,22 +19,22 @@ db.init_app(app)
 login_manager.init_app(app)
 
 # Import User model for login
-from server.models import User
+from src.server.models import User  # fixed import
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Register routes
-from server.routes import register_routes
-from server.admin_routes import register_admin_routes
-from server.legal_help import legal_help_bp  # <-- new import
+from src.server.routes import register_routes                # fixed
+from src.server.admin_routes import register_admin_routes    # fixed
+from src.server.legal_help import legal_help_bp              # fixed
 
 app = register_routes(app)
 app = register_admin_routes(app)
-app.register_blueprint(legal_help_bp)       # <-- new registration
+app.register_blueprint(legal_help_bp)
 
-# Optional: inject `now()` for template use
+# Inject `now()` for template use
 @app.context_processor
 def inject_now():
     return {'now': datetime.utcnow()}
