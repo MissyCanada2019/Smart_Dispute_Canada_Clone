@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Add 'src' to the system path so we can import 'server'
+# Add 'src' to the system path so we can import from the 'server' package
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 from flask import Flask
