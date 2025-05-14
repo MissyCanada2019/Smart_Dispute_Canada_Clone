@@ -5,37 +5,39 @@ from datetime import datetime
 import os
 
 db = SQLAlchemy()
+login_manager = LoginManager()
+login_manager.login_view = 'login'
 
-def create_app():
-    app = Flask(__name__)
-    
-    # Secret key for session security
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key")
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__)
 
-    db.init_app(app)
+# Secret Key & Database
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///site.db")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Login manager setup
-    login_manager = LoginManager()
-    login_manager.login_view = 'login'
-    login_manager.init_app(app)
+db.init_app(app)
+login_manager.init_app(app)
 
-    from .server.models import User
+# Import User model for login
+from server.models import User
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-    # Register routes
-    from .server.routes import register_routes
-    from .server.admin_routes import register_admin_routes
-    app = register_routes(app)
-    app = register_admin_routes(app)
+# Register routes
+from server.routes import register_routes
+from server.admin_routes import register_admin_routes
+from server.legal_help import legal_help_bp  # <-- new import
 
-    # Pass `now` to all templates
-    @app.context_processor
-    def inject_now():
-        return {'now': datetime.utcnow}
+app = register_routes(app)
+app = register_admin_routes(app)
+app.register_blueprint(legal_help_bp)       # <-- new registration
 
-    return app
+# Optional: inject `now()` for template use
+@app.context_processor
+def inject_now():
+    return {'now': datetime.utcnow()}
+
+if __name__ == "__main__":
+    app.run(debug=True)
