@@ -3,40 +3,49 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from datetime import datetime
 import os
+import sys
 
+# Ensure the 'server' directory is importable
+sys.path.append(os.path.join(os.path.dirname(__file__), 'server'))
+
+# Init extensions
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 
-def create_app():
-    app = Flask(__name__)
+# Create the app
+app = Flask(__name__)
 
-    # Config
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key")
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///site.db")
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Config
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///site.db")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    db.init_app(app)
-    login_manager.init_app(app)
+# Initialize
+db.init_app(app)
+login_manager.init_app(app)
 
-    # Import User model from models.py
-    from models import User
+# Models
+from models import User
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-    # Import and register routes
-    from server.routes import register_routes
-    from server.admin_routes import register_admin_routes
-    from server.legal_help import legal_help_bp
+# Routes
+from server.routes import register_routes
+from server.admin_routes import register_admin_routes
+from server.legal_help import legal_help_bp
 
-    app = register_routes(app)
-    app = register_admin_routes(app)
-    app.register_blueprint(legal_help_bp)
+app = register_routes(app)
+app = register_admin_routes(app)
+app.register_blueprint(legal_help_bp)
 
-    @app.context_processor
-    def inject_now():
-        return {'now': datetime.utcnow()}
+# Templating: now()
+@app.context_processor
+def inject_now():
+    return {'now': datetime.utcnow()}
 
-    return app
+# ENTRYPOINT for Render
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
