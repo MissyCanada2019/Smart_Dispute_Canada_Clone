@@ -1,8 +1,8 @@
 import sys
 import os
 
-# Add 'src' directory to Python path so 'server' can be found
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+# Add 'src' to the system path so we can import 'server'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
