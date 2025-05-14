@@ -1,7 +1,11 @@
 services:
   - type: web
-    name: smartdispute-ai
+    name: smart-dispute-backend
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn run:app
-    plan: free
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: FLASK_ENV
+        value: development
+      - key: SECRET_KEY
+        value: dev-secret-key
