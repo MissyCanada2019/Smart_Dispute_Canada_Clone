@@ -1,8 +1,8 @@
 import sys
 import os
 
-# Make sure 'server' folder is on the path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "server")))
+# Add 'src' directory to Python path so 'server' can be found
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -40,4 +40,3 @@ def inject_now():
 
 # Required for Gunicorn
 application = app
-
