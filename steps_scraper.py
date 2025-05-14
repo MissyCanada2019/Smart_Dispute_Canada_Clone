@@ -35,8 +35,7 @@ def scrape_steps_to_justice():
     with open("scraped_data/steps_to_justice.json", "w", encoding="utf-8") as f:
         json.dump(scraped_data, f, ensure_ascii=False, indent=2)
 
-    return scraped_data
+    print(f"Scraped {len(scraped_data)} housing law entries.")
 
 if __name__ == "__main__":
-    results = scrape_steps_to_justice()
-    print(f"Scraped {len(results)} Q&A pairs.")
+    scrape_steps_to_justice()
