@@ -39,4 +39,4 @@ def inject_now():
     return {'now': datetime.utcnow()}
 
 # Required for Gunicorn
-application = app
+app = app
