@@ -3,6 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from datetime import datetime
 import os
+import sys
+
+# Ensure the 'server' directory is importable
+sys.path.append(os.path.join(os.path.dirname(__file__), 'server'))
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -18,8 +22,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 login_manager.init_app(app)
 
-# Import User model from models.py in src/
-from models import User
+# Import User model for login
+from server.models import User
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -28,13 +32,13 @@ def load_user(user_id):
 # Register routes
 from server.routes import register_routes
 from server.admin_routes import register_admin_routes
-from server.legal_help import legal_help_bp
+from server.legal_help import legal_help_bp  # <-- new import
 
 app = register_routes(app)
 app = register_admin_routes(app)
-app.register_blueprint(legal_help_bp)
+app.register_blueprint(legal_help_bp)       # <-- new registration
 
-# Jinja `now()` helper
+# Optional: inject `now()` for template use
 @app.context_processor
 def inject_now():
     return {'now': datetime.utcnow()}
