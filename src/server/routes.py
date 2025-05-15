@@ -1,4 +1,6 @@
 import os
+import requests
+from bs4 import BeautifulSoup
 from flask import request, render_template, redirect, url_for, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -170,5 +172,30 @@ def register_routes(app):
             flash(f"Form generated, but email failed: {e}", "danger")
 
         return send_file(form_path, as_attachment=True)
+
+    @app.route("/scrape-steps")
+    @login_required
+    def scrape_steps_to_justice():
+        base_url = "https://stepstojustice.ca/legal-topics/"
+        response = requests.get(base_url)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        topics = []
+        section = soup.find('div', class_='view-content')
+        links = section.find_all('a', href=True) if section else []
+
+        for link in links:
+            title = link.get_text(strip=True)
+            href = link['href']
+            full_url = href if href.startswith("http") else f"https://stepstojustice.ca{href}"
+            topics.append({'title': title, 'url': full_url})
+
+        save_path = os.path.join(app.root_path, "static", "steps_data.json")
+        with open(save_path, "w") as f:
+            import json
+            json.dump(topics, f, indent=2)
+
+        flash("Scraped Steps to Justice topics saved to /static/steps_data.json", "success")
+        return redirect(url_for("dashboard"))
 
     return app
