@@ -5,6 +5,7 @@ from flask import request, render_template, redirect, url_for, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from scrapers.steps_scraper import scrape_steps_to_justice
 
 from src.models import db, User, Case, Evidence
 from utils.ocr import extract_text_from_file
@@ -199,3 +200,4 @@ def register_routes(app):
         return redirect(url_for("dashboard"))
 
     return app
+c
