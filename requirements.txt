@@ -16,3 +16,4 @@ lxml==4.9.3
 openai==1.14.3
 docx2pdf==0.1.8
 weasyprint==59.0
+beautifulsoup4
