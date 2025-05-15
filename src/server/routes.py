@@ -1,60 +1,196 @@
+import os
 import requests
 from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import re
+from flask import request, render_template, redirect, url_for, flash, send_file
+from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
-# Simulated scraped Steps to Justice topics
-def scrape_steps_to_justice():
-    base_url = "https://stepstojustice.ca/legal-topics/"
-    try:
-        res = requests.get(base_url)
-        res.raise_for_status()
-        soup = BeautifulSoup(res.text, "html.parser")
-        topic_links = soup.select("div.view-content a")
+from src.models import db, User, Case, Evidence
+from utils.ocr import extract_text_from_file
+from utils.issue_classifier import classify_legal_issue
+from utils.merit_weight import score_merit
+from utils.form_selector import select_form
+from utils.document_generator import generate_legal_form
+from utils.email_utils import send_email
+from scrapers.unified_scraper import fetch_all_relevant_help
 
-        topics = []
-        for link in topic_links:
-            title = link.get_text(strip=True)
-            href = link.get("href")
-            url = href if href.startswith("http") else f"https://stepstojustice.ca{href}"
-            topics.append({
-                "title": title,
-                "url": url,
-                "source": "Steps to Justice"
-            })
+def register_routes(app):
+    @app.route("/")
+    def index():
+        return render_template("index.html")
 
-        return topics
-    except Exception as e:
-        print("Steps scrape error:", e)
-        return []
+    @app.route("/about")
+    def about():
+        return render_template("about.html")
 
-# Simulated CanLII scraper returning static examples (replace later)
-def fetch_canlii_cases(issue, province="ontario"):
-    dummy_cases = [
-        {"title": "Tenant rights in Ontario", "url": "https://www.canlii.org/en/on/onltb/doc/2022/2022canlii1234/2022canlii1234.html", "source": "CanLII"},
-        {"title": "Small claims procedure", "url": "https://www.canlii.org/en/on/onsc/doc/2021/2021onsc4567/2021onsc4567.html", "source": "CanLII"},
-    ]
-    return dummy_cases
+    @app.route("/pricing")
+    def pricing():
+        return render_template("pricing.html")
 
-# NLP-powered matching
-def match_relevant_content(user_issue, scraped_data, top_n=5):
-    texts = [item["title"] for item in scraped_data]
-    vectorizer = TfidfVectorizer().fit_transform([user_issue] + texts)
-    similarities = cosine_similarity(vectorizer[0:1], vectorizer[1:]).flatten()
-    
-    scored_items = []
-    for i, score in enumerate(similarities):
-        item = scraped_data[i]
-        item["relevance"] = float(score)
-        scored_items.append(item)
+    @app.route("/register", methods=["GET", "POST"])
+    def register():
+        if request.method == "POST":
+            email = request.form["email"]
+            password = request.form["password"]
+            full_name = request.form.get("full_name")
+            address = request.form.get("address")
+            phone = request.form.get("phone")
+            postal_code = request.form.get("postal_code")
+            province = request.form.get("province")
+            subscription_type = request.args.get("plan", "free")
 
-    # Sort by relevance
-    return sorted(scored_items, key=lambda x: x["relevance"], reverse=True)[:top_n]
+            if User.query.filter_by(email=email).first():
+                flash("Email already registered.", "danger")
+                return redirect(url_for("register"))
 
-# Unified fetch function for SmartDispute
-def fetch_all_relevant_help(issue, province="ontario"):
-    steps_data = scrape_steps_to_justice()
-    canlii_data = fetch_canlii_cases(issue, province)
-    combined = steps_data + canlii_data
-    return match_relevant_content(issue, combined)
+            if subscription_type == "low_income" and "verification_doc" in request.files:
+                file = request.files["verification_doc"]
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    folder = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
+                    os.makedirs(folder, exist_ok=True)
+                    file.save(os.path.join(folder, filename))
+
+            user = User(
+                email=email,
+                password_hash=generate_password_hash(password),
+                full_name=full_name,
+                address=address,
+                phone=phone,
+                postal_code=postal_code,
+                province=province,
+                subscription_type=subscription_type
+            )
+            db.session.add(user)
+            db.session.commit()
+            flash("Account created! Please login.", "success")
+            return redirect(url_for("login"))
+
+        return render_template("register.html")
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            email = request.form["email"]
+            password = request.form["password"]
+            user = User.query.filter_by(email=email).first()
+            if user and check_password_hash(user.password_hash, password):
+                login_user(user)
+                return redirect(url_for("dashboard"))
+            flash("Invalid credentials", "danger")
+        return render_template("login.html")
+
+    @app.route("/logout")
+    @login_required
+    def logout():
+        logout_user()
+        flash("Logged out", "info")
+        return redirect(url_for("login"))
+
+    @app.route("/dashboard")
+    @login_required
+    def dashboard():
+        cases = Case.query.filter_by(user_id=current_user.id).all()
+        return render_template("dashboard.html", cases=cases)
+
+    @app.route("/create-case", methods=["GET", "POST"])
+    @login_required
+    def create_case():
+        if request.method == "POST":
+            title = request.form["title"]
+            description = request.form["description"]
+            case = Case(title=title, description=description, user_id=current_user.id)
+            db.session.add(case)
+            db.session.commit()
+            flash("Case created successfully.", "success")
+            return redirect(url_for("upload"))
+        return render_template("create_case.html")
+
+    @app.route("/upload", methods=["GET", "POST"])
+    @login_required
+    def upload():
+        cases = Case.query.filter_by(user_id=current_user.id).all()
+        if request.method == "POST":
+            case_id = request.form["case_id"]
+            file = request.files.get("document")
+            if file:
+                filename = secure_filename(file.filename)
+                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+                file.save(save_path)
+
+                evidence = Evidence(case_id=case_id, user_id=current_user.id,
+                                    filename=filename, file_path=save_path)
+                db.session.add(evidence)
+                db.session.commit()
+
+                text, _ = extract_text_from_file(save_path)
+                legal_issue = classify_legal_issue(text)
+                merit_score = score_merit(text, legal_issue)
+                form = select_form(legal_issue, current_user.province)
+
+                flash(f"Evidence uploaded. Case scored {merit_score}% merit. Suggested form: {form}", "info")
+                return redirect(url_for("review_case", case_id=case_id))
+        return render_template("upload.html", cases=cases)
+
+    @app.route("/review/<int:case_id>")
+    @login_required
+    def review_case(case_id):
+        case = Case.query.get_or_404(case_id)
+        return render_template("review_case.html", case=case)
+
+    @app.route("/pay-etf/<int:case_id>")
+    @login_required
+    def pay_etf(case_id):
+        case = Case.query.get_or_404(case_id)
+        return render_template("pay_etf.html", case=case)
+
+    @app.route("/generate-form/<int:case_id>")
+    @login_required
+    def generate_form(case_id):
+        case = Case.query.get_or_404(case_id)
+        evidence = Evidence.query.filter_by(case_id=case_id).first()
+
+        if not evidence:
+            flash("No evidence found for this case.", "warning")
+            return redirect(url_for("dashboard"))
+
+        form_path = generate_legal_form(case, evidence)
+
+        subject = f"Your Legal Form for Case: {case.title}"
+        body = f"Hi {current_user.full_name},\n\nYour legal document for '{case.title}' is attached.\n\nâ SmartDispute.ai"
+
+        try:
+            send_email(
+                to_email=current_user.email,
+                subject=subject,
+                body=body,
+                attachment_path=form_path
+            )
+            flash("Legal form generated and emailed to you successfully.", "success")
+        except Exception as e:
+            flash(f"Form generated, but email failed: {e}", "danger")
+
+        return send_file(form_path, as_attachment=True)
+
+    @app.route("/legal-help/<int:case_id>")
+    @login_required
+    def legal_help(case_id):
+        case = Case.query.get_or_404(case_id)
+        evidence_files = Evidence.query.filter_by(case_id=case.id).all()
+
+        full_text = ""
+        for ev in evidence_files:
+            try:
+                text, _ = extract_text_from_file(ev.file_path)
+                full_text += text + " "
+            except Exception as e:
+                print("Error reading evidence:", e)
+
+        issue = classify_legal_issue(full_text)
+        help_links = fetch_all_relevant_help(issue, current_user.province)
+
+        return render_template("legal_help.html", case=case, issue=issue, help_links=help_links)
+
+    return app
