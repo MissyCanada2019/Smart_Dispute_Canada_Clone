@@ -1,5 +1,6 @@
 import os
 import requests
+import traceback
 from bs4 import BeautifulSoup
 from flask import request, render_template, redirect, url_for, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
@@ -31,41 +32,47 @@ def register_routes(app):
     @app.route("/register", methods=["GET", "POST"])
     def register():
         if request.method == "POST":
-            email = request.form["email"]
-            password = request.form["password"]
-            full_name = request.form.get("full_name")
-            address = request.form.get("address")
-            phone = request.form.get("phone")
-            postal_code = request.form.get("postal_code")
-            province = request.form.get("province")
-            subscription_type = request.args.get("plan", "free")
+            try:
+                email = request.form["email"]
+                password = request.form["password"]
+                full_name = request.form.get("full_name")
+                address = request.form.get("address")
+                phone = request.form.get("phone")
+                postal_code = request.form.get("postal_code")
+                province = request.form.get("province")
+                subscription_type = request.args.get("plan", "free")
 
-            if User.query.filter_by(email=email).first():
-                flash("Email already registered.", "danger")
+                if User.query.filter_by(email=email).first():
+                    flash("Email already registered.", "danger")
+                    return redirect(url_for("register"))
+
+                if subscription_type == "low_income" and "verification_doc" in request.files:
+                    file = request.files["verification_doc"]
+                    if file and file.filename:
+                        filename = secure_filename(file.filename)
+                        folder = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
+                        os.makedirs(folder, exist_ok=True)
+                        file.save(os.path.join(folder, filename))
+
+                user = User(
+                    email=email,
+                    password_hash=generate_password_hash(password),
+                    full_name=full_name,
+                    address=address,
+                    phone=phone,
+                    postal_code=postal_code,
+                    province=province,
+                    subscription_type=subscription_type
+                )
+                db.session.add(user)
+                db.session.commit()
+                flash("Account created! Please login.", "success")
+                return redirect(url_for("login"))
+
+            except Exception as e:
+                traceback.print_exc()
+                flash("An error occurred during registration. Please try again.", "danger")
                 return redirect(url_for("register"))
-
-            if subscription_type == "low_income" and "verification_doc" in request.files:
-                file = request.files["verification_doc"]
-                if file and file.filename:
-                    filename = secure_filename(file.filename)
-                    folder = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
-                    os.makedirs(folder, exist_ok=True)
-                    file.save(os.path.join(folder, filename))
-
-            user = User(
-                email=email,
-                password_hash=generate_password_hash(password),
-                full_name=full_name,
-                address=address,
-                phone=phone,
-                postal_code=postal_code,
-                province=province,
-                subscription_type=subscription_type
-            )
-            db.session.add(user)
-            db.session.commit()
-            flash("Account created! Please login.", "success")
-            return redirect(url_for("login"))
 
         return render_template("register.html")
 
@@ -159,7 +166,7 @@ def register_routes(app):
         form_path = generate_legal_form(case, evidence)
 
         subject = f"Your Legal Form for Case: {case.title}"
-        body = f"Hi {current_user.full_name},\n\nYour legal document for '{case.title}' is attached.\n\nâ SmartDispute.ai"
+        body = f"Hi {current_user.full_name},\n\nYour legal document for '{case.title}' is attached.\n\n– SmartDispute.ai"
 
         try:
             send_email(
