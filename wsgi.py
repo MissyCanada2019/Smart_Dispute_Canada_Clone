@@ -6,5 +6,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 from server import create_app
 
-# This will be picked up by Gunicorn as `wsgi:application`
-application = create_app()
+# Create the Flask application using the factory pattern
+application = create_app()  # Used by Gunicorn/Render
+
+# Optional: expose 'app' for local dev tools like Flask CLI
+app = application
