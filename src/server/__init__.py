@@ -2,6 +2,8 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from datetime import datetime
+
 from src.models import db, User
 
 def create_app():
@@ -21,15 +23,17 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register your main user-facing routes
     from src.server.routes import register_routes
     app = register_routes(app)
 
-    # Optional: register admin routes if needed
     try:
         from src.server.admin_routes import register_admin_routes
         app = register_admin_routes(app)
     except ImportError:
         pass
+
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.utcnow()}
 
     return app
