@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Legal Topics from Steps to Justice</title>
+</head>
+<body>
+    <h1>Legal Topics</h1>
+    <ul>
+        {% for topic in topics %}
+            <li><a href="{{ topic.url }}" target="_blank">{{ topic.title }}</a></li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</body>
+</html>
