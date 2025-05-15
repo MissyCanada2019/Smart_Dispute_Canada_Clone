@@ -1,39 +1,31 @@
-{% extends "base.html" %}{% extends "base.html" %}
-{% block content %}
-<div class="container mt-5">
-    <h3 class="mb-4 text-danger">Admin Dashboard: Unlock Case Downloads</h3>
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
+from flask_login import login_required, current_user
+from src.models import db, Case
 
-    {% if cases %}
-        <table class="table table-bordered table-striped align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th scope="col">Case ID</th>
-                    <th scope="col">Title</th>
-                    <th scope="col">User Email</th>
-                    <th scope="col">Date Created</th>
-                    <th scope="col" class="text-center">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for case in cases %}
-                    <tr>
-                        <td>{{ case.id }}</td>
-                        <td>{{ case.title }}</td>
-                        <td>{{ case.user.email }}</td>
-                        <td>{{ case.created_at.strftime('%Y-%m-%d') }}</td>
-                        <td class="text-center">
-                            <form method="POST" action="{{ url_for('admin_unlock_case', case_id=case.id) }}">
-                                <button class="btn btn-success btn-sm">Mark as Paid & Unlock</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="alert alert-info text-center">
-            All cases are paid or no cases found.
-        </div>
-    {% endif %}
-</div>
-{% endblock %}
+admin_bp = Blueprint("admin_bp", __name__)
+
+# Admin-only route guard
+def admin_required(f):
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            abort(403)
+        return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__
+    return login_required(wrapper)
+
+# Admin Dashboard - List unpaid cases
+@admin_bp.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    unpaid_cases = Case.query.filter_by(is_paid=False).order_by(Case.created_at.desc()).all()
+    return render_template("admin_dashboard.html", cases=unpaid_cases)
+
+# Unlock case manually after payment confirmation
+@admin_bp.route("/admin/unlock/<int:case_id>", methods=["POST"])
+@admin_required
+def admin_unlock_case(case_id):
+    case = Case.query.get_or_404(case_id)
+    case.is_paid = True
+    db.session.commit()
+    flash(f"Case {case.title} has been marked as paid and unlocked.", "success")
+    return redirect(url_for("admin_bp.admin_dashboard"))
