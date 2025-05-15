@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from datetime import datetime
 
-from server.models import User
+from models import User
 from server.routes import register_routes
 from server.admin_routes import register_admin_routes
 from server.legal_help import legal_help_bp
