@@ -1,51 +1,40 @@
-{% extends "base.html" %}
+{@app.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload():
+    cases = Case.query.filter_by(user_id=current_user.id).all()
+    if request.method == "POST":
+        case_id = request.form["case_id"]
+        file = request.files.get("document")
+        tag = request.form.get("tag")
+        notes = request.form.get("notes")
 
-{% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4 text-center text-danger">Upload Evidence</h2>
+        if file:
+            filename = secure_filename(file.filename)
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            file.save(save_path)
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            evidence = Evidence(
+                case_id=case_id,
+                user_id=current_user.id,
+                filename=filename,
+                file_path=save_path,
+                tag=tag
+            )
+            db.session.add(evidence)
+            db.session.commit()
 
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}">
-        <div class="mb-3">
-            <label for="case_id" class="form-label">Select Case</label>
-            <select name="case_id" id="case_id" class="form-select" required>
-                {% if cases %}
-                    {% for case in cases %}
-                        <option value="{{ case.id }}">{{ case.title }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option disabled selected>No cases found. Please create one first.</option>
-                {% endif %}
-            </select>
-        </div>
+            # AI Analysis
+            text, _ = extract_text_from_file(save_path)
+            legal_issue = classify_legal_issue(text)
+            merit_score = score_merit(text, legal_issue)
+            form = select_form(legal_issue, current_user.province)
 
-        <div class="mb-3">
-            <label for="document" class="form-label">Upload File (PDF, DOCX, JPG, PNG, etc.)</label>
-            <input type="file" name="document" id="document" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.rtf,.csv,.xls,.xlsx" required>
-            <div class="form-text">Max size: 100MB</div>
-        </div>
+            flash(
+                f"Evidence uploaded. Case scored {merit_score}% merit. Suggested form: {form}. "
+                f"<a href='{url_for('legal_help', case_id=case_id)}' class='alert-link'>View Legal Help</a>",
+                "success"
+            )
+            return redirect(url_for("review_case", case_id=case_id))
 
-        <div class="mb-3">
-            <label for="tag" class="form-label">Optional Tag</label>
-            <input type="text" name="tag" class="form-control" placeholder="e.g., Lease Agreement, Medical Report">
-        </div>
-
-        <div class="mb-3">
-            <label for="notes" class="form-label">Additional Notes (Optional)</label>
-            <textarea name="notes" class="form-control" rows="4" placeholder="Describe this file, how it connects to your case, or any important context..."></textarea>
-        </div>
-
-        <button type="submit" class="btn btn-danger w-100">Submit Evidence</button>
-    </form>
-</div>
-{% endblock %}
+    return render_template("upload.html", cases=cases)
