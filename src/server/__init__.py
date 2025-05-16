@@ -1,7 +1,5 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 from datetime import datetime
 
 from src.server.extensions import db, login_manager
@@ -18,8 +16,7 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
-
-    login_manager = LoginManager()
+    login_manager.init_app(app)
     login_manager.login_view = "login"
 
     @login_manager.user_loader
