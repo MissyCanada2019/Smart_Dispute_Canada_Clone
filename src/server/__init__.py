@@ -3,7 +3,6 @@ from flask import Flask
 from datetime import datetime
 
 from src.server.extensions import db, login_manager
-from src.models import User
 
 def create_app():
     app = Flask(__name__)
