@@ -4,7 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from datetime import datetime
 
-from src.models import db, User
+from src.server.extensions import db, login_manager
+from src.models import User
 
 def create_app():
     app = Flask(__name__)
