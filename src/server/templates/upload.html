@@ -1,110 +1,49 @@
-{% extends 'base.html' %}
+@main.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    if request.method == 'POST':
+        case_title = request.form.get('case_title')
+        case_category = request.form.get('case_category')
+        files = request.files.getlist('files[]')
 
-{% block title %}Upload Documents | SmartDispute.ai{% endblock %}
+        if not case_title or not case_category or not files:
+            flash("All fields are required including at least one file.", "danger")
+            return redirect(request.url)
 
-{% block content %}
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h1>Upload Documents</h1>
-            <p class="text-muted">Upload your legal documents, photos, and evidence to begin analyzing your case</p>
-        </div>
-    </div>
-    
-    <div class="card bg-dark border-0 shadow-sm">
-        <div class="card-body p-4">
-            <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="case_title" class="form-label">Case Title</label>
-                            <input type="text" class="form-control" id="case_title" name="case_title" 
-                                   placeholder="e.g., Eviction Notice Dispute" required>
-                            <div class="form-text">Give your case a descriptive name for easy reference</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="case_category" class="form-label">Legal Category</label>
-                            <select class="form-select" id="case_category" name="case_category" required>
-                                <option value="" selected disabled>Select a category</option>
-                                <option value="landlord-tenant">Landlord-Tenant Dispute</option>
-                                <option value="credit">Credit Report Error</option>
-                                <option value="human-rights">Human Rights Complaint</option>
-                                <option value="small-claims">Small Claims Court</option>
-                                <option value="child-protection">Child Protection</option>
-                                <option value="police">Police Complaint</option>
-                            </select>
-                            <div class="form-text">Choose the legal category that best matches your issue</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="upload-area mb-4" id="upload-area">
-                    <i class="feather-upload-cloud"></i>
-                    <h4 class="mt-3">Drag and drop files here</h4>
-                    <p class="text-muted">or</p>
-                    <button type="button" class="btn btn-outline-primary" id="select-files-btn">Browse Files</button>
-                    <input type="file" class="d-none" id="file-input" name="files[]" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
-                    <p class="text-muted small mt-3">
-                        Supported file types: PDF, Images (JPG, PNG), Word Documents (DOC, DOCX)
-                    </p>
-                </div>
-                
-                <div id="file-list" class="mb-4"></div>
-                
-                <div class="d-grid d-md-flex justify-content-md-end">
-                    <button type="submit" class="btn btn-primary btn-lg" id="submit-files" style="display: none;">
-                        <i class="feather-upload me-2"></i> Upload and Analyze
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card bg-dark h-100">
-                <div class="card-body">
-                    <h4>Privacy & Security</h4>
-                    <p class="text-muted">Your privacy is our top priority. All documents are securely stored and encrypted.</p>
-                    <ul class="text-muted">
-                        <li>Files are encrypted using industry-standard protocols</li>
-                        <li>Access is restricted to authorized users only</li>
-                        <li>Automated deletion after 90 days of inactivity</li>
-                        <li>Never shared with third parties</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mt-4 mt-md-0">
-            <div class="card bg-dark h-100">
-                <div class="card-body">
-                    <h4>Tips for Better Results</h4>
-                    <p class="text-muted">To get the most accurate analysis:</p>
-                    <ul class="text-muted">
-                        <li>Upload clear, high-resolution images or scans</li>
-                        <li>Include all relevant documents, even if they seem minor</li>
-                        <li>Make sure text is legible and properly oriented</li>
-                        <li>Provide any correspondence related to your case</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+        # Create and save the new case
+        new_case = Case(
+            user_id=current_user.id,
+            title=case_title,
+            description=f"Uploaded under category: {case_category}",
+            legal_issue=case_category,
+            matched_keywords="[]",  # placeholder
+            confidence_score=0.0    # placeholder
+        )
+        db.session.add(new_case)
+        db.session.commit()
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectFilesBtn = document.getElementById('select-files-btn');
-        
-        if (selectFilesBtn) {
-            selectFilesBtn.addEventListener('click', function() {
-                document.getElementById('file-input').click();
-            });
-        }
-    });
-</script>
-{% endblock %}
+        # Save files to user/case folder
+        upload_folder = os.path.join('uploads', str(current_user.id), str(new_case.id))
+        os.makedirs(upload_folder, exist_ok=True)
+
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(upload_folder, filename)
+                file.save(file_path)
+
+                # Create Evidence record
+                evidence = Evidence(
+                    user_id=current_user.id,
+                    case_id=new_case.id,
+                    filename=filename,
+                    file_path=file_path,
+                    tag=case_category
+                )
+                db.session.add(evidence)
+
+        db.session.commit()
+        flash("Case created and files uploaded successfully!", "success")
+        return redirect(url_for('main.dashboard'))  # Adjust this if you want to land somewhere else
+
+    return render_template('upload.html')
