@@ -40,8 +40,11 @@ def create_app():
     except ImportError:
         pass
 
-    @app.context_processor
+        @app.context_processor
     def inject_now():
         return {'now': datetime.utcnow()}
+
+    with app.app_context():
+        db.create_all()
 
     return app
