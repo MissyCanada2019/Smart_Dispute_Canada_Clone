@@ -5,12 +5,12 @@
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4 text-danger">Admin Dashboard</h2>
-    
+
     <div class="card bg-dark text-white shadow-sm">
         <div class="card-body">
             <h5 class="card-title">User Overview</h5>
-            <p class="card-text">Monitor user activity, subscription levels, and case activity.</p>
-            
+            <p class="card-text">Manage users, subscriptions, and access levels.</p>
+
             <div class="table-responsive">
                 <table class="table table-dark table-hover align-middle">
                     <thead class="table-danger">
@@ -22,7 +22,7 @@
                             <th>Cases</th>
                             <th>Evidence</th>
                             <th>Admin</th>
-                            <th>Action</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -42,8 +42,19 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <!-- Future: promote/demote buttons, view cases, etc. -->
-                                <button class="btn btn-sm btn-outline-light" disabled>View</button>
+                                {% if not user.admin %}
+                                <form method="POST" action="{{ url_for('promote_user', user_id=user.id) }}" style="display:inline;">
+                                    {{ csrf_token() }}
+                                    <button class="btn btn-sm btn-outline-light">Promote to Admin</button>
+                                </form>
+                                {% endif %}
+
+                                {% if user.subscription != 'unlimited' %}
+                                <form method="POST" action="{{ url_for('upgrade_user', user_id=user.id) }}" style="display:inline;">
+                                    {{ csrf_token() }}
+                                    <button class="btn btn-sm btn-outline-warning">Upgrade to Unlimited</button>
+                                </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
