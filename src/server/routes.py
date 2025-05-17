@@ -14,7 +14,7 @@ from utils.merit_weight import score_merit
 from utils.form_selector import select_form
 from utils.document_generator import generate_legal_form
 from utils.email_utils import send_email
-from scrapers.unified_scraper import fetch_all_relevant_help
+#from scrapers.unified_scraper import fetch_all_relevant_help
 
 def register_routes(app):
     @app.route("/")
