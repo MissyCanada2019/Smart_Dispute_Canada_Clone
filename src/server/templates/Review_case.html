@@ -6,29 +6,36 @@
 <div class="container mt-5">
     <h3 class="text-danger mb-3">Review Your Case</h3>
 
-    <div class="card mb-4">
+    <div class="card bg-dark text-light mb-4">
         <div class="card-body">
-            <h5>Case: {{ case.title }}</h5>
-            <p><strong>Court:</strong> {{ form_info.court }}</p>
-            <p><strong>Form:</strong> {{ form_info.form_name }}</p>
+            <h5 class="card-title">{{ case.title }}</h5>
+            <p><strong>Recommended Court:</strong> {{ form_info.court }}</p>
+            <p><strong>Recommended Form:</strong> {{ form_info.form_name }}</p>
             <p><strong>Merit Score:</strong> {{ merit_score }}%</p>
             <p class="text-muted">{{ explanation }}</p>
         </div>
     </div>
 
+    {% if not case.is_paid %}
     <div class="alert alert-warning">
-        <strong>Unlock Your Legal Form ($9.99)</strong><br>
-        Pay securely by PayPal or send an e-transfer to: <br>
-        <strong>smartdisputecanada@gmail.com</strong>
+        <h5>Unlock Your Legal Form — <strong>$9.99</strong></h5>
+        <p>Pay securely with PayPal or send an e-transfer to:</p>
+        <p><strong>smartdisputecanada@gmail.com</strong></p>
     </div>
 
-    <div class="mb-3">
-        <div id="paypal-button-container"></div>
-    </div>
+    <div class="mb-3" id="paypal-button-container"></div>
 
-    <form method="POST" action="{{ url_for('confirm_payment', case_id=case.id) }}">
-        <button type="submit" class="btn btn-secondary">I Paid by E-Transfer</button>
+    <form method="POST" action="{{ url_for('main.confirm_payment', case_id=case.id) }}">
+        <button type="submit" class="btn btn-outline-secondary">I Paid by E-Transfer</button>
     </form>
+    {% else %}
+    <div class="alert alert-success">
+        <strong>Payment confirmed!</strong> Your legal package is ready to download.
+    </div>
+    <a href="{{ url_for('main.download_legal_package', case_id=case.id) }}" class="btn btn-success">
+        Download Legal Package
+    </a>
+    {% endif %}
 </div>
 
 <!-- PayPal Smart Button Script -->
@@ -50,8 +57,7 @@
         },
         onApprove: function(data, actions) {
             return actions.order.capture().then(function(details) {
-                alert('Payment completed by ' + details.payer.name.given_name);
-                fetch('{{ url_for("confirm_payment", case_id=case.id) }}', {
+                fetch('{{ url_for("main.confirm_payment", case_id=case.id) }}', {
                     method: 'POST'
                 }).then(() => window.location.reload());
             });
