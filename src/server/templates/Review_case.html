@@ -1,67 +1,49 @@
 {% extends "base.html" %}
-
-{% block title %}Review Case | SmartDispute Canada{% endblock %}
-
+{% block title %}Review Case{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <h3 class="text-danger mb-3">Review Your Case</h3>
+  <h3 class="text-danger">Case Review</h3>
+  <p><strong>Suggested Form:</strong> {{ form_info.form_name }}</p>
+  <p><strong>Court:</strong> {{ form_info.court }}</p>
+  <p><strong>Merit Score:</strong> {{ merit_score }}%</p>
+  <p>{{ explanation }}</p>
 
-    <div class="card bg-dark text-light mb-4">
-        <div class="card-body">
-            <h5 class="card-title">{{ case.title }}</h5>
-            <p><strong>Recommended Court:</strong> {{ form_info.court }}</p>
-            <p><strong>Recommended Form:</strong> {{ form_info.form_name }}</p>
-            <p><strong>Merit Score:</strong> {{ merit_score }}%</p>
-            <p class="text-muted">{{ explanation }}</p>
-        </div>
-    </div>
+  <div class="alert alert-warning">
+    <strong>To unlock your form:</strong><br>
+    Pay <strong>$9.99</strong> securely with PayPal or send e-transfer to <br>
+    <strong>smartdisputecanada@gmail.com</strong>
+  </div>
 
-    {% if not case.is_paid %}
-    <div class="alert alert-warning">
-        <h5>Unlock Your Legal Form — <strong>$9.99</strong></h5>
-        <p>Pay securely with PayPal or send an e-transfer to:</p>
-        <p><strong>smartdisputecanada@gmail.com</strong></p>
-    </div>
+  <form id="etransfer-form" method="POST" action="{{ url_for('confirm_payment', case_id=case.id) }}">
+    <input type="hidden" name="payment_id" value="manual-e-transfer">
+    <button class="btn btn-secondary">I Paid by E-Transfer</button>
+  </form>
 
-    <div class="mb-3" id="paypal-button-container"></div>
-
-    <form method="POST" action="{{ url_for('main.confirm_payment', case_id=case.id) }}">
-        <button type="submit" class="btn btn-outline-secondary">I Paid by E-Transfer</button>
-    </form>
-    {% else %}
-    <div class="alert alert-success">
-        <strong>Payment confirmed!</strong> Your legal package is ready to download.
-    </div>
-    <a href="{{ url_for('main.download_legal_package', case_id=case.id) }}" class="btn btn-success">
-        Download Legal Package
-    </a>
-    {% endif %}
+  <div id="paypal-button-container" class="mt-3"></div>
 </div>
 
-<!-- PayPal Smart Button Script -->
-<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=CAD"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=CAD"></script>
 <script>
-    paypal.Buttons({
-        style: {
-            layout: 'horizontal',
-            color:  'blue',
-            shape:  'rect',
-            label:  'pay'
-        },
-        createOrder: function(data, actions) {
-            return actions.order.create({
-                purchase_units: [{
-                    amount: { value: '9.99' }
-                }]
-            });
-        },
-        onApprove: function(data, actions) {
-            return actions.order.capture().then(function(details) {
-                fetch('{{ url_for("main.confirm_payment", case_id=case.id) }}', {
-                    method: 'POST'
-                }).then(() => window.location.reload());
-            });
-        }
-    }).render('#paypal-button-container');
+paypal.Buttons({
+  createOrder: function(data, actions) {
+    return actions.order.create({
+      purchase_units: [{ amount: { value: '9.99' } }]
+    });
+  },
+  onApprove: function(data, actions) {
+    return actions.order.capture().then(function(details) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{{ url_for("confirm_payment", case_id=case.id) }}';
+      const hiddenField = document.createElement('input');
+      hiddenField.type = 'hidden';
+      hiddenField.name = 'payment_id';
+      hiddenField.value = data.orderID;
+      form.appendChild(hiddenField);
+      document.body.appendChild(form);
+      form.submit();
+    });
+  }
+}).render('#paypal-button-container');
 </script>
 {% endblock %}
