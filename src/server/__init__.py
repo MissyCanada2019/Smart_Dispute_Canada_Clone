@@ -9,7 +9,7 @@ def create_app():
 
     # Configuration
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "dev-secret")
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///site.db")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ["DATABASE_URL"]  # PostgreSQL only
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, "uploads")
 
