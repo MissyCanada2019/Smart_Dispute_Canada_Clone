@@ -1,40 +1,40 @@
-{@app.route("/upload", methods=["GET", "POST"])
-@login_required
-def upload():
-    cases = Case.query.filter_by(user_id=current_user.id).all()
-    if request.method == "POST":
-        case_id = request.form["case_id"]
-        file = request.files.get("document")
-        tag = request.form.get("tag")
-        notes = request.form.get("notes")
+{% extends 'base.html' %}
 
-        if file:
-            filename = secure_filename(file.filename)
-            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-            file.save(save_path)
+{% block title %}Upload Evidence | SmartDispute.ai{% endblock %}
 
-            evidence = Evidence(
-                case_id=case_id,
-                user_id=current_user.id,
-                filename=filename,
-                file_path=save_path,
-                tag=tag
-            )
-            db.session.add(evidence)
-            db.session.commit()
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Upload Evidence</h2>
+    <p class="text-muted">Upload documents or images for a selected case. Our AI will analyze them to determine the legal issue, merit score, and recommend the correct form.</p>
 
-            # AI Analysis
-            text, _ = extract_text_from_file(save_path)
-            legal_issue = classify_legal_issue(text)
-            merit_score = score_merit(text, legal_issue)
-            form = select_form(legal_issue, current_user.province)
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="case_id" class="form-label">Select Case</label>
+            <select class="form-select" name="case_id" required>
+                <option value="">Choose a case...</option>
+                {% for case in cases %}
+                    <option value="{{ case.id }}">{{ case.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-            flash(
-                f"Evidence uploaded. Case scored {merit_score}% merit. Suggested form: {form}. "
-                f"<a href='{url_for('legal_help', case_id=case_id)}' class='alert-link'>View Legal Help</a>",
-                "success"
-            )
-            return redirect(url_for("review_case", case_id=case_id))
+        <div class="mb-3">
+            <label for="document" class="form-label">Upload Document</label>
+            <input class="form-control" type="file" id="document" name="document" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+            <small class="text-muted">Accepted formats: PDF, Word, PNG, JPG</small>
+        </div>
 
-    return render_template("upload.html", cases=cases)
+        <div class="mb-3">
+            <label for="tag" class="form-label">Tag</label>
+            <input type="text" class="form-control" name="tag" placeholder="e.g. Lease Agreement, Screenshot, Email">
+        </div>
+
+        <div class="mb-3">
+            <label for="notes" class="form-label">Notes (optional)</label>
+            <textarea class="form-control" name="notes" rows="3" placeholder="Optional notes for your own reference..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-danger btn-lg w-100">Upload and Analyze</button>
+    </form>
+</div>
+{% endblock %}
