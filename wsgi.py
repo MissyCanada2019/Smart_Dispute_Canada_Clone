@@ -5,15 +5,13 @@ import os
 sys.path.append(os.path.abspath('src'))
 
 from server import create_app
-from server.extensions import db  # update this path if your db lives somewhere else
+from server.extensions import db
 
-# Create the Flask application using factory
 application = create_app()
 app = application
 
-# TEMPORARY: Delete and recreate database
-if os.path.exists('users.db'):
-    os.remove('users.db')
-
-with app.app_context():
-    db.create_all()
+# OPTIONAL: Only create DB tables if DB doesn't exist (safe check)
+db_path = os.path.join(os.getcwd(), 'site.db')
+if not os.path.exists(db_path):
+    with app.app_context():
+        db.create_all()
