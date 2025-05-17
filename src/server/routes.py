@@ -1,203 +1,66 @@
-import os
-import requests
-import traceback
-from bs4 import BeautifulSoup
-from flask import request, render_template, redirect, url_for, flash, send_file
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
-from src.models import db, User, Case, Evidence
-from utils.ocr import extract_text_from_file
-from utils.issue_classifier import classify_legal_issue
-from utils.merit_weight import score_merit
-from utils.form_selector import select_form
-from utils.document_generator import generate_legal_form
-from utils.email_utils import send_email
-#from scrapers.unified_scraper import fetch_all_relevant_help
+from src.models import db, Case, Evidence
+from src.server.utils.ocr import extract_text_from_file
+from src.server.utils.issue_classifier import classify_legal_issue
+from src.server.utils.merit_weight import score_merit
+from src.server.utils.form_selector import select_form
 
-def register_routes(app):
-    @app.route("/")
-    def index():
-        return render_template("index.html")
+main = Blueprint("main", __name__)
 
-    @app.route("/about")
-    def about():
-        return render_template("about.html")
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'}
 
-    @app.route("/pricing")
-    def pricing():
-        return render_template("pricing.html")
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    @app.route("/register", methods=["GET", "POST"])
-    def register():
-        if request.method == "POST":
-            try:
-                email = request.form["email"]
-                password = request.form["password"]
-                full_name = request.form.get("full_name")
-                address = request.form.get("address")
-                phone = request.form.get("phone")
-                postal_code = request.form.get("postal_code")
-                province = request.form.get("province")
-                subscription_type = request.args.get("plan", "free")
+@main.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    cases = Case.query.filter_by(user_id=current_user.id).all()
+    if request.method == "POST":
+        case_id = request.form["case_id"]
+        file = request.files.get("document")
+        tag = request.form.get("tag")
 
-                if User.query.filter_by(email=email).first():
-                    flash("Email already registered.", "danger")
-                    return redirect(url_for("register"))
+        if not file or not allowed_file(file.filename):
+            flash("Invalid file type.", "danger")
+            return redirect(request.url)
 
-                if subscription_type == "low_income" and "verification_doc" in request.files:
-                    file = request.files["verification_doc"]
-                    if file and file.filename:
-                        filename = secure_filename(file.filename)
-                        folder = os.path.join(app.config["UPLOAD_FOLDER"], "verification_docs")
-                        os.makedirs(folder, exist_ok=True)
-                        file.save(os.path.join(folder, filename))
+        filename = secure_filename(file.filename)
+        user_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], str(current_user.id))
+        os.makedirs(user_folder, exist_ok=True)
+        file_path = os.path.join(user_folder, filename)
+        file.save(file_path)
 
-                user = User(
-                    email=email,
-                    password_hash=generate_password_hash(password),
-                    full_name=full_name,
-                    address=address,
-                    phone=phone,
-                    postal_code=postal_code,
-                    province=province,
-                    subscription_type=subscription_type
-                )
-                db.session.add(user)
-                db.session.commit()
-                flash("Account created! Please login.", "success")
-                return redirect(url_for("login"))
+        # Save to DB
+        evidence = Evidence(
+            case_id=case_id,
+            user_id=current_user.id,
+            filename=filename,
+            file_path=file_path,
+            tag=tag
+        )
+        db.session.add(evidence)
 
-            except Exception as e:
-                traceback.print_exc()
-                flash("An error occurred during registration. Please try again.", "danger")
-                return redirect(url_for("register"))
+        # AI Analysis
+        text, _ = extract_text_from_file(file_path)
+        legal_issue = classify_legal_issue(text)
+        confidence = score_merit(text, legal_issue)
+        form = select_form(legal_issue, current_user.province)
 
-        return render_template("register.html")
+        # Update Case
+        case = Case.query.get(case_id)
+        case.legal_issue = legal_issue
+        case.confidence_score = confidence
+        db.session.commit()
 
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if request.method == "POST":
-            email = request.form["email"]
-            password = request.form["password"]
-            user = User.query.filter_by(email=email).first()
-            if user and check_password_hash(user.password_hash, password):
-                login_user(user)
-                return redirect(url_for("dashboard"))
-            flash("Invalid credentials", "danger")
-        return render_template("login.html")
+        flash(
+            f"File uploaded. Case scored {confidence:.1f}% merit. Suggested form: {form}.",
+            "success"
+        )
+        return redirect(url_for('main.review_case', case_id=case_id))
 
-    @app.route("/logout")
-    @login_required
-    def logout():
-        logout_user()
-        flash("Logged out", "info")
-        return redirect(url_for("login"))
-
-    @app.route("/dashboard")
-    @login_required
-    def dashboard():
-        cases = Case.query.filter_by(user_id=current_user.id).all()
-        return render_template("dashboard.html", cases=cases)
-
-    @app.route("/create-case", methods=["GET", "POST"])
-    @login_required
-    def create_case():
-        if request.method == "POST":
-            title = request.form["title"]
-            description = request.form["description"]
-            case = Case(title=title, description=description, user_id=current_user.id)
-            db.session.add(case)
-            db.session.commit()
-            flash("Case created successfully.", "success")
-            return redirect(url_for("upload"))
-        return render_template("create_case.html")
-
-    @app.route("/upload", methods=["GET", "POST"])
-    @login_required
-    def upload():
-        cases = Case.query.filter_by(user_id=current_user.id).all()
-        if request.method == "POST":
-            case_id = request.form["case_id"]
-            file = request.files.get("document")
-            if file:
-                filename = secure_filename(file.filename)
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-                file.save(save_path)
-
-                evidence = Evidence(case_id=case_id, user_id=current_user.id,
-                                    filename=filename, file_path=save_path)
-                db.session.add(evidence)
-                db.session.commit()
-
-                text, _ = extract_text_from_file(save_path)
-                legal_issue = classify_legal_issue(text)
-                merit_score = score_merit(text, legal_issue)
-                form = select_form(legal_issue, current_user.province)
-
-                flash(f"Evidence uploaded. Case scored {merit_score}% merit. Suggested form: {form}", "info")
-                return redirect(url_for("review_case", case_id=case_id))
-        return render_template("upload.html", cases=cases)
-
-    @app.route("/review/<int:case_id>")
-    @login_required
-    def review_case(case_id):
-        case = Case.query.get_or_404(case_id)
-        return render_template("review_case.html", case=case)
-
-    @app.route("/pay-etf/<int:case_id>")
-    @login_required
-    def pay_etf(case_id):
-        case = Case.query.get_or_404(case_id)
-        return render_template("pay_etf.html", case=case)
-
-    @app.route("/generate-form/<int:case_id>")
-    @login_required
-    def generate_form(case_id):
-        case = Case.query.get_or_404(case_id)
-        evidence = Evidence.query.filter_by(case_id=case_id).first()
-
-        if not evidence:
-            flash("No evidence found for this case.", "warning")
-            return redirect(url_for("dashboard"))
-
-        form_path = generate_legal_form(case, evidence)
-
-        subject = f"Your Legal Form for Case: {case.title}"
-        body = f"Hi {current_user.full_name},\n\nYour legal document for '{case.title}' is attached.\n\n– SmartDispute.ai"
-
-        try:
-            send_email(
-                to_email=current_user.email,
-                subject=subject,
-                body=body,
-                attachment_path=form_path
-            )
-            flash("Legal form generated and emailed to you successfully.", "success")
-        except Exception as e:
-            flash(f"Form generated, but email failed: {e}", "danger")
-
-        return send_file(form_path, as_attachment=True)
-
-    @app.route("/legal-help/<int:case_id>")
-    @login_required
-    def legal_help(case_id):
-        case = Case.query.get_or_404(case_id)
-        evidence_files = Evidence.query.filter_by(case_id=case.id).all()
-
-        full_text = ""
-        for ev in evidence_files:
-            try:
-                text, _ = extract_text_from_file(ev.file_path)
-                full_text += text + " "
-            except Exception as e:
-                print("Error reading evidence:", e)
-
-        issue = classify_legal_issue(full_text)
-        help_links = fetch_all_relevant_help(issue, current_user.province)
-
-        return render_template("legal_help.html", case=case, issue=issue, help_links=help_links)
-
-    return app
+    return render_template("upload.html", cases=cases)
