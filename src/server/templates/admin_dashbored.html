@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-danger">Admin Dashboard</h2>
+    
+    <div class="card bg-dark text-white shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">User Overview</h5>
+            <p class="card-text">Monitor user activity, subscription levels, and case activity.</p>
+            
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead class="table-danger">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Subscription</th>
+                            <th>Cases</th>
+                            <th>Evidence</th>
+                            <th>Admin</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in user_stats %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.name or "N/A" }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.subscription }}</td>
+                            <td>{{ user.cases }}</td>
+                            <td>{{ user.evidence }}</td>
+                            <td>
+                                {% if user.admin %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- Future: promote/demote buttons, view cases, etc. -->
+                                <button class="btn btn-sm btn-outline-light" disabled>View</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
