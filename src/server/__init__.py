@@ -1,7 +1,6 @@
-import os
-from flask import Flask
+from src.server.extensions import db
+from flask_login import UserMixin
 from datetime import datetime
-
 from src.server.extensions import db, login_manager
 # REMOVE: from src.models import User
 
