@@ -9,7 +9,7 @@ def create_app():
 
     # Configuration
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "dev-secret")
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ["DATABASE_URL"]  # PostgreSQL only
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ["DATABASE_URL"]
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, "uploads")
 
@@ -17,6 +17,11 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "login"
+
+    # TEMPORARY — Create tables on first deploy
+    with app.app_context():
+        db.create_all()
+        print("PostgreSQL tables created.")
 
     # Import models AFTER initializing db
     from src.models import User
