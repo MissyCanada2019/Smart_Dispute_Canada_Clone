@@ -1,7 +1,6 @@
 import os
 from flask import Flask  # This is the missing import!
 from datetime import datetime
-
 from src.server.extensions import db, login_manager
 
 def create_app():
