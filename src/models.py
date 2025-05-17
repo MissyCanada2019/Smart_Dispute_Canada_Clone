@@ -19,6 +19,7 @@ class User(UserMixin, db.Model):
     evidence = db.relationship('Evidence', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)
 
+
 class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -27,8 +28,14 @@ class Case(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_paid = db.Column(db.Boolean, default=False)
 
+    # NEW FIELDS FOR AI CLASSIFICATION
+    legal_issue = db.Column(db.String(100))
+    matched_keywords = db.Column(db.Text)
+    confidence_score = db.Column(db.Float)
+
     evidence = db.relationship('Evidence', backref='case', lazy=True)
     payments = db.relationship('Payment', backref='case', lazy=True)
+
 
 class Evidence(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,6 +45,7 @@ class Evidence(db.Model):
     file_path = db.Column(db.String(500), nullable=False)
     tag = db.Column(db.String(100))
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
