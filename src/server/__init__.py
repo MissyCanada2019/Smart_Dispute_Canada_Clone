@@ -1,9 +1,8 @@
-from flask import Flask
-from src.server.extensions import db
-from flask_login import UserMixin
+import os
+from flask import Flask  # This is the missing import!
 from datetime import datetime
+
 from src.server.extensions import db, login_manager
-# REMOVE: from src.models import User
 
 def create_app():
     app = Flask(__name__)
@@ -19,7 +18,7 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = "login"
 
-    # DELAY import of models UNTIL AFTER init_app
+    # Import AFTER init to avoid circular import
     from src.models import User
 
     @login_manager.user_loader
