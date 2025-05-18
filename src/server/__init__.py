@@ -1,55 +1,13 @@
-import os
 from flask import Flask
-from datetime import datetime
-
 from src.server.extensions import db, login_manager
 
 def create_app():
     app = Flask(__name__)
+    app.config.from_object("config.Config")  # or your actual config
 
-    # Configuration
-    app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "dev-secret")
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ["DATABASE_URL"]  # PostgreSQL only
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, "uploads")
-
-    # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = "login"
 
-    # Import models AFTER initializing db
-    from src.models import User
-
-    # Auto-create DB tables on app launch (including User table)
-    with app.app_context():
-        db.create_all()
-        print("Database tables created successfully.")
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-
-    # Register main routes
-    from src.server.routes import register_routes
-    app = register_routes(app)
-
-    # Optional routes
-    try:
-        from src.server.admin_routes import register_admin_routes
-        app = register_admin_routes(app)
-    except ImportError:
-        pass
-
-    try:
-        from src.server.legal_help import legal_help_bp
-        app.register_blueprint(legal_help_bp)
-    except ImportError:
-        pass
-
-    # Global template variables
-    @app.context_processor
-    def inject_now():
-        return {'now': datetime.utcnow()}
+    # register blueprints, etc.
 
     return app
