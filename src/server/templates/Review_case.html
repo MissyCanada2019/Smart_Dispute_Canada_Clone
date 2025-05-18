@@ -56,6 +56,21 @@
   {% endif %}
 </div>
 
+{% if case.is_paid %}
+  <hr>
+  <div class="mt-4">
+    <h4>Your Legal Package is Ready</h4>
+    <a href="{{ url_for('main.download_legal_package', case_id=case.id) }}" class="btn btn-success">Download Legal Package</a>
+  </div>
+{% else %}
+  <hr>
+  <div class="mt-4">
+    <h4 class="text-muted">Preview (Blurred Until Payment)</h4>
+    <img src="{{ url_for('static', filename='blurred_preview.png') }}" class="img-fluid" style="filter: blur(8px);">
+    <p class="text-muted">This preview will unlock after payment is confirmed.</p>
+  </div>
+{% endif %}
+
 <!-- PayPal SDK and Smart Button Logic -->
 <script src="https://www.paypal.com/sdk/js?client-id=ARsm9AAW9tT9M4IgU6IzGQbOGB1EdTnl5_jni5Ej1Zkyh2XjdxSftBFiZhAkcStiKiASldayU_GIPlKp&currency=CAD"></script>
 <script>
