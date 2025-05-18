@@ -57,8 +57,9 @@ class Payment(db.Model):
     payment_id = db.Column(db.String(150), nullable=True)
     status = db.Column(db.String(50), default="pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    class LegalReference(db.Model):
+
+
+class LegalReference(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey('case.id'), nullable=False)
     title = db.Column(db.String(255))
@@ -72,3 +73,14 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f"<LegalReference {self.title} from {self.source_type}>"
+
+
+class FormTemplate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    court = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(100))
+    url = db.Column(db.String(500), nullable=False)
+    jurisdiction = db.Column(db.String(50), default="ontario")
+    file_type = db.Column(db.String(20), default="doc")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
