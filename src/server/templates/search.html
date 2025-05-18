@@ -1,4 +1,30 @@
-<form method="POST" action="/canlii-search">
-  <input type="text" name="keyword" placeholder="Enter legal keyword">
-  <button type="submit">Search CanLII</button>
-</form>
+{% extends "base.html" %}
+{% block title %}Search CanLII | SmartDispute.ai{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4 text-danger">Search CanLII Case Law</h2>
+    <p class="text-muted">Enter a legal term, issue, or case keyword to find relevant Canadian case law from CanLII.</p>
+
+    <form method="POST" action="{{ url_for('main.canlii_search') }}">
+        <div class="input-group mb-3">
+            <input type="text" name="keyword" class="form-control" placeholder="e.g. habitability, breach of contract, eviction" required>
+            <button type="submit" class="btn btn-danger">Search</button>
+        </div>
+    </form>
+
+    {% if results %}
+        <h4 class="mt-5">Search Results</h4>
+        <ul class="list-group">
+            {% for case in results %}
+                <li class="list-group-item">
+                    <a href="{{ case.url }}" target="_blank">{{ case.title }}</a>
+                    <br><small class="text-muted">{{ case.court }} – {{ case.date }}</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% elif searched %}
+        <div class="alert alert-warning mt-4">No results found for "{{ searched }}".</div>
+    {% endif %}
+</div>
+{% endblock %}
