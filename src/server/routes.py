@@ -1,13 +1,13 @@
 import os
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from datetime import datetime
-from src.server.extensions import db, mailgun
+
+from src.server.extensions import db, send_receipt
 from src.models import Case, Evidence, Payment, User
 from src.server.ai_helpers import extract_text_from_file, classify_legal_issue, score_merit, select_form
 from src.server.payments import process_paypal_payment
-import smtplib
 
 main = Blueprint("main", __name__)
 
@@ -31,8 +31,8 @@ def upload():
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
-        file = request.files["document"]
         tag = request.form.get("tag")
+        file = request.files.get("document")
 
         if file:
             filename = secure_filename(file.filename)
@@ -46,7 +46,7 @@ def upload():
             score = score_merit(text, legal_issue)
             keywords, form_info = select_form(legal_issue, current_user.province)
 
-            # Save case & evidence
+            # Save case
             new_case = Case(
                 user_id=current_user.id,
                 title=title,
@@ -54,10 +54,12 @@ def upload():
                 legal_issue=legal_issue,
                 confidence_score=score,
                 matched_keywords=keywords,
+                is_paid=False
             )
             db.session.add(new_case)
             db.session.commit()
 
+            # Save evidence
             evidence = Evidence(
                 user_id=current_user.id,
                 case_id=new_case.id,
@@ -80,21 +82,22 @@ def review_case(case_id):
         return redirect(url_for("main.dashboard"))
 
     form_info = select_form(case.legal_issue, current_user.province)[1]
-    return render_template("review_case.html", case=case, merit_score=case.confidence_score,
-                           form_info=form_info, explanation="Your case shows strong legal grounds.")
+    return render_template("review_case.html", case=case,
+                           merit_score=case.confidence_score,
+                           form_info=form_info,
+                           explanation="Your case shows strong legal grounds.")
 
 @main.route("/confirm-payment/<int:case_id>", methods=["POST"])
 @login_required
 def confirm_payment(case_id):
     case = Case.query.get_or_404(case_id)
     if case.user_id != current_user.id:
-        flash("Unauthorized action", "danger")
+        flash("Unauthorized action.", "danger")
         return redirect(url_for("main.dashboard"))
 
     case.is_paid = True
     db.session.commit()
 
-    # Log the payment
     payment = Payment(
         case_id=case.id,
         user_id=current_user.id,
@@ -107,8 +110,8 @@ def confirm_payment(case_id):
     db.session.add(payment)
     db.session.commit()
 
-    # Send receipt
-    mailgun.send_receipt(current_user.email, case.title, "e-transfer")
+    # Send confirmation email
+    send_receipt(current_user.email, case.title, "e-transfer")
 
     flash("Payment confirmed! You can now download your legal package.", "success")
     return redirect(url_for("main.review_case", case_id=case.id))
@@ -121,7 +124,7 @@ def download_legal_package(case_id):
         flash("Please complete payment before downloading.", "warning")
         return redirect(url_for("main.review_case", case_id=case.id))
 
-    # For now, simulate with a placeholder file
+    # Placeholder PDF
     return send_file("static/sample_form.pdf", as_attachment=True)
 
 @main.route("/admin")
@@ -137,12 +140,13 @@ def admin_panel():
 @login_required
 def promote_user(user_id):
     if not current_user.is_admin:
+        flash("Access denied.", "danger")
         return redirect(url_for("main.dashboard"))
-    user = User.query.get(user_id)
+    user = User.query.get_or_404(user_id)
     user.subscription_type = "unlimited"
     user.subscription_end = datetime.utcnow() + timedelta(days=365)
     db.session.commit()
-    flash(f"{user.full_name} promoted to unlimited.", "success")
+    flash(f"{user.full_name} promoted to unlimited access.", "success")
     return redirect(url_for("main.admin_panel"))
 
 @main.route("/admin/revoke/<int:user_id>")
@@ -151,7 +155,7 @@ def revoke_admin(user_id):
     if current_user.email != "teresa.bertin@smartdispute.com":
         flash("Only the owner can revoke admin access.", "danger")
         return redirect(url_for("main.dashboard"))
-    user = User.query.get(user_id)
+    user = User.query.get_or_404(user_id)
     user.is_admin = False
     db.session.commit()
     flash("Admin privileges revoked.", "warning")
