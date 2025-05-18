@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -10,16 +10,16 @@ from src.server.ai_helpers import extract_text_from_file, classify_legal_issue, 
 from src.server.payments import verify_paypal_payment
 from src.server.document_generator import generate_docx, generate_watermarked_preview
 from src.steps_scraper import run_scraper
-from src.server.canlii_scraper import search_canlii
 
 main = Blueprint("main", __name__)
-
-UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 ETRANSFER_EMAIL = "smartdisputecanada@gmail.com"
+
 
 @main.route("/")
 def home():
     return render_template("index.html")
+
 
 @main.route("/dashboard")
 @login_required
@@ -27,11 +27,10 @@ def dashboard():
     cases = Case.query.filter_by(user_id=current_user.id).all()
     return render_template("dashboard.html", cases=cases)
 
+
 @main.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
-    cases = Case.query.filter_by(user_id=current_user.id).all()
-
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
@@ -40,10 +39,11 @@ def upload():
 
         if file:
             filename = secure_filename(file.filename)
-            save_path = os.path.join(UPLOAD_FOLDER, filename)
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            save_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(save_path)
 
+            # AI-assisted analysis
             text, _ = extract_text_from_file(save_path)
             legal_issue = classify_legal_issue(text)
             score = score_merit(text, legal_issue)
@@ -51,6 +51,7 @@ def upload():
 
             run_scraper()
 
+            # Save case
             new_case = Case(
                 user_id=current_user.id,
                 title=title,
@@ -63,6 +64,7 @@ def upload():
             db.session.add(new_case)
             db.session.commit()
 
+            # Save evidence
             evidence = Evidence(
                 user_id=current_user.id,
                 case_id=new_case.id,
@@ -75,7 +77,9 @@ def upload():
 
             return redirect(url_for("main.review_case", case_id=new_case.id))
 
+    cases = Case.query.filter_by(user_id=current_user.id).all()
     return render_template("upload.html", cases=cases)
+
 
 @main.route("/review/<int:case_id>")
 @login_required
@@ -92,6 +96,7 @@ def review_case(case_id):
                            explanation="Your case shows strong legal grounds.",
                            ETRANSFER_EMAIL=ETRANSFER_EMAIL)
 
+
 @main.route("/preview/<int:case_id>")
 @login_required
 def preview_case(case_id):
@@ -106,6 +111,7 @@ def preview_case(case_id):
 
     return send_file(doc_path, as_attachment=False)
 
+
 @main.route("/download/<int:case_id>")
 @login_required
 def download_legal_package(case_id):
@@ -116,6 +122,7 @@ def download_legal_package(case_id):
 
     doc_path = generate_docx(case.id)
     return send_file(doc_path, as_attachment=True)
+
 
 @main.route("/confirm-payment/<int:case_id>", methods=["POST"])
 @login_required
@@ -142,6 +149,7 @@ def confirm_payment(case_id):
     send_receipt(current_user.email, case.title, "e-transfer")
     flash("Payment confirmed. Document unlocked.", "success")
     return redirect(url_for("main.review_case", case_id=case.id))
+
 
 @main.route("/paypal-confirm/<int:case_id>", methods=["POST"])
 @login_required
