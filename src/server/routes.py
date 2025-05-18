@@ -191,3 +191,17 @@ def revoke_admin(user_id):
     db.session.commit()
     flash("Admin privileges revoked.", "warning")
     return redirect(url_for("main.admin_panel"))
+    # CanLII Search Page
+@main.route("/canlii-search", methods=["GET", "POST"])
+@login_required
+def canlii_search():
+    results = []
+    searched = None
+
+    if request.method == "POST":
+        keyword = request.form.get("keyword")
+        searched = keyword
+        # Replace this with your real CanLII scraping logic
+        results = run_canlii_scraper(keyword)
+
+    return render_template("search.html", results=results, searched=searched)
