@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from src.server.extensions import db, send_receipt
 from src.models import Case, Evidence, Payment, User
 from src.server.ai_helpers import extract_text_from_file, classify_legal_issue, score_merit, select_form
-from src.server.payments import process_paypal_payment
+from src.server.payments import verify_paypal_payment
 
 main = Blueprint("main", __name__)
 
@@ -40,13 +40,11 @@ def upload():
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             file.save(save_path)
 
-            # AI processing
             text, _ = extract_text_from_file(save_path)
             legal_issue = classify_legal_issue(text)
             score = score_merit(text, legal_issue)
             keywords, form_info = select_form(legal_issue, current_user.province)
 
-            # Save case
             new_case = Case(
                 user_id=current_user.id,
                 title=title,
@@ -59,7 +57,6 @@ def upload():
             db.session.add(new_case)
             db.session.commit()
 
-            # Save evidence
             evidence = Evidence(
                 user_id=current_user.id,
                 case_id=new_case.id,
@@ -110,11 +107,47 @@ def confirm_payment(case_id):
     db.session.add(payment)
     db.session.commit()
 
-    # Send confirmation email
     send_receipt(current_user.email, case.title, "e-transfer")
 
     flash("Payment confirmed! You can now download your legal package.", "success")
     return redirect(url_for("main.review_case", case_id=case.id))
+
+@main.route("/paypal-confirm/<int:case_id>", methods=["POST"])
+@login_required
+def paypal_confirm(case_id):
+    payment_id = request.form.get("payment_id")
+    expected_amount = 9.99
+
+    status = verify_paypal_payment(payment_id, expected_amount)
+
+    if status == "completed":
+        case = Case.query.get_or_404(case_id)
+        case.is_paid = True
+        db.session.commit()
+
+        payment = Payment(
+            case_id=case.id,
+            user_id=current_user.id,
+            amount=expected_amount,
+            payment_type="legal_package",
+            payment_method="paypal",
+            status="completed",
+            created_at=datetime.utcnow()
+        )
+        db.session.add(payment)
+        db.session.commit()
+
+        send_receipt(current_user.email, case.title, "PayPal")
+
+        flash("PayPal payment verified! Legal package unlocked.", "success")
+    elif status == "mismatch":
+        flash("Payment amount or currency mismatch.", "danger")
+    elif status == "pending":
+        flash("Payment still pending.", "warning")
+    else:
+        flash("Payment verification failed.", "danger")
+
+    return redirect(url_for("main.review_case", case_id=case_id))
 
 @main.route("/download/<int:case_id>")
 @login_required
@@ -123,8 +156,6 @@ def download_legal_package(case_id):
     if not case.is_paid:
         flash("Please complete payment before downloading.", "warning")
         return redirect(url_for("main.review_case", case_id=case.id))
-
-    # Placeholder PDF
     return send_file("static/sample_form.pdf", as_attachment=True)
 
 @main.route("/admin")
