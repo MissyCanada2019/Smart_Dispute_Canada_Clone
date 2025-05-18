@@ -8,6 +8,8 @@ from src.server.extensions import db, send_receipt
 from src.models import Case, Evidence, Payment, User
 from src.server.ai_helpers import extract_text_from_file, classify_legal_issue, score_merit, select_form
 from src.server.payments import verify_paypal_payment
+from src.steps_scraper import run_scraper
+from src.server.canlii_scraper import search_canlii  # Optional
 
 main = Blueprint("main", __name__)
 
@@ -28,6 +30,7 @@ def dashboard():
 @login_required
 def upload():
     cases = Case.query.filter_by(user_id=current_user.id).all()
+
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
@@ -40,10 +43,14 @@ def upload():
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             file.save(save_path)
 
+            # AI analysis
             text, _ = extract_text_from_file(save_path)
             legal_issue = classify_legal_issue(text)
             score = score_merit(text, legal_issue)
             keywords, form_info = select_form(legal_issue, current_user.province)
+
+            # Scrape Steps to Justice content
+            run_scraper()  # Optional: pass legal_issue for targeted scrape
 
             new_case = Case(
                 user_id=current_user.id,
@@ -68,6 +75,7 @@ def upload():
             db.session.commit()
 
             return redirect(url_for("main.review_case", case_id=new_case.id))
+
     return render_template("upload.html", cases=cases)
 
 @main.route("/review/<int:case_id>")
@@ -186,12 +194,12 @@ def revoke_admin(user_id):
     if current_user.email != "teresa.bertin@smartdispute.com":
         flash("Only the owner can revoke admin access.", "danger")
         return redirect(url_for("main.dashboard"))
-    user = User.query.get_or_404(user_id)
+        user = User.query.get_or_404(user_id)
     user.is_admin = False
     db.session.commit()
     flash("Admin privileges revoked.", "warning")
     return redirect(url_for("main.admin_panel"))
-    # CanLII Search Page
+
 @main.route("/canlii-search", methods=["GET", "POST"])
 @login_required
 def canlii_search():
@@ -201,7 +209,25 @@ def canlii_search():
     if request.method == "POST":
         keyword = request.form.get("keyword")
         searched = keyword
-        # Replace this with your real CanLII scraping logic
-        results = run_canlii_scraper(keyword)
+        results = search_canlii(keyword, jurisdiction=current_user.province or "on")
 
     return render_template("search.html", results=results, searched=searched)
+
+@main.route("/legal-help/<int:case_id>")
+@login_required
+def show_legal_help(case_id):
+    case = Case.query.get_or_404(case_id)
+    if case.user_id != current_user.id:
+        flash("Access denied.", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    from src.models import LegalReference
+    references = LegalReference.query.filter_by(case_id=case.id).all()
+    return render_template("legal_help.html", case=case, references=references)
+
+# OPTIONAL: Future route for generating legal forms
+# @main.route("/generate-form/<int:case_id>")
+# @login_required
+# def generate_form(case_id):
+#     # Generate filled-out DOCX or PDF from FormTemplate based on legal_issue
+#     pass
