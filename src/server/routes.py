@@ -5,13 +5,12 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from src.server.extensions import db, send_receipt
-from src.models import Case, Evidence, Payment, User, LegalReference
+from src.models import Case, Evidence, Payment, User
 from src.server.ai_helpers import extract_text_from_file, classify_legal_issue, score_merit, select_form
 from src.server.payments import verify_paypal_payment
-from src.server.document_generator import generate_docx, convert_to_pdf
-from src.server.preview_utils import create_watermarked_preview
-from src.server.canlii_scraper import search_canlii
+from src.server.document_generator import generate_docx, generate_watermarked_preview
 from src.steps_scraper import run_scraper
+from src.server.canlii_scraper import search_canlii
 
 main = Blueprint("main", __name__)
 
@@ -32,6 +31,7 @@ def dashboard():
 @login_required
 def upload():
     cases = Case.query.filter_by(user_id=current_user.id).all()
+
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
@@ -48,6 +48,7 @@ def upload():
             legal_issue = classify_legal_issue(text)
             score = score_merit(text, legal_issue)
             keywords, form_info = select_form(legal_issue, current_user.province)
+
             run_scraper()
 
             new_case = Case(
@@ -86,36 +87,42 @@ def review_case(case_id):
 
     form_info = select_form(case.legal_issue, current_user.province)[1]
     return render_template("review_case.html", case=case,
-                           merit_score=case.confidence_score,
                            form_info=form_info,
-                           explanation="Your case shows strong legal grounds.")
+                           merit_score=case.confidence_score,
+                           explanation="Your case shows strong legal grounds.",
+                           ETRANSFER_EMAIL=ETRANSFER_EMAIL)
 
 @main.route("/preview/<int:case_id>")
 @login_required
 def preview_case(case_id):
     case = Case.query.get_or_404(case_id)
     if case.user_id != current_user.id:
-        flash("Access denied.", "danger")
-        return redirect(url_for("main.dashboard"))
-
-    docx_path = generate_docx(case, current_user)
-    pdf_path = convert_to_pdf(docx_path)
+        return "Unauthorized", 403
 
     if case.is_paid or current_user.subscription_type in ["monthly", "yearly"]:
-        return send_file(pdf_path, as_attachment=False)
+        doc_path = generate_docx(case.id)
+    else:
+        doc_path = generate_watermarked_preview(case.id)
 
-    preview_path = pdf_path.replace(".pdf", "_preview.pdf")
-    create_watermarked_preview(pdf_path, preview_path)
-    flash("Upgrade or pay to unlock full version.", "info")
-    return send_file(preview_path, as_attachment=False)
+    return send_file(doc_path, as_attachment=False)
+
+@main.route("/download/<int:case_id>")
+@login_required
+def download_legal_package(case_id):
+    case = Case.query.get_or_404(case_id)
+    if not case.is_paid and current_user.subscription_type not in ["monthly", "yearly"]:
+        flash("Complete payment or subscribe to download.", "warning")
+        return redirect(url_for("main.review_case", case_id=case.id))
+
+    doc_path = generate_docx(case.id)
+    return send_file(doc_path, as_attachment=True)
 
 @main.route("/confirm-payment/<int:case_id>", methods=["POST"])
 @login_required
 def confirm_payment(case_id):
     case = Case.query.get_or_404(case_id)
     if case.user_id != current_user.id:
-        flash("Unauthorized action.", "danger")
-        return redirect(url_for("main.dashboard"))
+        return "Unauthorized", 403
 
     case.is_paid = True
     db.session.commit()
@@ -133,7 +140,7 @@ def confirm_payment(case_id):
     db.session.commit()
 
     send_receipt(current_user.email, case.title, "e-transfer")
-    flash("Payment confirmed! You can now download your legal package.", "success")
+    flash("Payment confirmed. Document unlocked.", "success")
     return redirect(url_for("main.review_case", case_id=case.id))
 
 @main.route("/paypal-confirm/<int:case_id>", methods=["POST"])
@@ -141,7 +148,6 @@ def confirm_payment(case_id):
 def paypal_confirm(case_id):
     payment_id = request.form.get("payment_id")
     expected_amount = 9.99
-
     status = verify_paypal_payment(payment_id, expected_amount)
 
     if status == "completed":
@@ -162,77 +168,8 @@ def paypal_confirm(case_id):
         db.session.commit()
 
         send_receipt(current_user.email, case.title, "PayPal")
-        flash("PayPal payment verified! Legal package unlocked.", "success")
-    elif status == "mismatch":
-        flash("Payment amount or currency mismatch.", "danger")
-    elif status == "pending":
-        flash("Payment still pending.", "warning")
+        flash("PayPal payment verified. Document unlocked.", "success")
     else:
-        flash("Payment verification failed.", "danger")
+        flash("Payment failed or pending.", "danger")
 
     return redirect(url_for("main.review_case", case_id=case_id))
-
-@main.route("/download/<int:case_id>")
-@login_required
-def download_legal_package(case_id):
-    case = Case.query.get_or_404(case_id)
-    if not case.is_paid and current_user.subscription_type not in ["monthly", "yearly"]:
-        flash("Please complete payment or upgrade your plan to download.", "warning")
-        return redirect(url_for("main.review_case", case_id=case.id))
-    return send_file("static/sample_form.pdf", as_attachment=True)
-
-@main.route("/admin")
-@login_required
-def admin_panel():
-    if not current_user.is_admin:
-        flash("Access denied.", "danger")
-        return redirect(url_for("main.dashboard"))
-    users = User.query.all()
-    return render_template("admin_dashboard.html", users=users)
-
-@main.route("/admin/promote/<int:user_id>")
-@login_required
-def promote_user(user_id):
-    if not current_user.is_admin:
-        flash("Access denied.", "danger")
-        return redirect(url_for("main.dashboard"))
-    user = User.query.get_or_404(user_id)
-    user.subscription_type = "unlimited"
-    user.subscription_end = datetime.utcnow() + timedelta(days=365)
-    db.session.commit()
-    flash(f"{user.full_name} promoted to unlimited access.", "success")
-    return redirect(url_for("main.admin_panel"))
-
-@main.route("/admin/revoke/<int:user_id>")
-@login_required
-def revoke_admin(user_id):
-    if current_user.email != "teresa.bertin@smartdispute.com":
-        flash("Only the owner can revoke admin access.", "danger")
-        return redirect(url_for("main.dashboard"))
-    user = User.query.get_or_404(user_id)
-    user.is_admin = False
-    db.session.commit()
-    flash("Admin privileges revoked.", "warning")
-    return redirect(url_for("main.admin_panel"))
-
-@main.route("/canlii-search", methods=["GET", "POST"])
-@login_required
-def canlii_search():
-    results = []
-    searched = None
-    if request.method == "POST":
-        keyword = request.form.get("keyword")
-        searched = keyword
-        results = search_canlii(keyword, jurisdiction=current_user.province or "on")
-    return render_template("search.html", results=results, searched=searched)
-
-@main.route("/legal-help/<int:case_id>")
-@login_required
-def show_legal_help(case_id):
-    case = Case.query.get_or_404(case_id)
-    if case.user_id != current_user.id:
-        flash("Access denied.", "danger")
-        return redirect(url_for("main.dashboard"))
-
-    references = LegalReference.query.filter_by(case_id=case.id).all()
-    return render_template("legal_help.html", case=case, references=references)
