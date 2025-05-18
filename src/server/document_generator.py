@@ -1,14 +1,13 @@
 import os
+import pypandoc
 from docx import Document
 from datetime import datetime
 
 TEMPLATE_DIR = "templates/forms"
+OUTPUT_DIR = "generated_forms"
 
 def generate_docx(case, user, form_type="repair_request"):
-    """
-    Generate a DOCX form filled with user and case info based on province.
-    """
-    province = user.province.lower() if hasattr(user, 'province') else "on"
+    province = user.province.lower()
     template_path = os.path.join(TEMPLATE_DIR, province, f"{form_type}_template.docx")
 
     if not os.path.exists(template_path):
@@ -16,7 +15,6 @@ def generate_docx(case, user, form_type="repair_request"):
 
     doc = Document(template_path)
 
-    # Replace basic placeholders
     placeholders = {
         "[FULL_NAME]": user.full_name,
         "[EMAIL]": user.email,
@@ -24,24 +22,29 @@ def generate_docx(case, user, form_type="repair_request"):
         "[DATE]": datetime.utcnow().strftime("%Y-%m-%d")
     }
 
-    for paragraph in doc.paragraphs:
-        for placeholder, value in placeholders.items():
-            if placeholder in paragraph.text:
-                paragraph.text = paragraph.text.replace(placeholder, value)
+    for para in doc.paragraphs:
+        for ph, val in placeholders.items():
+            if ph in para.text:
+                para.text = para.text.replace(ph, val)
 
-    # Add conditional clauses based on legal issue
     issue_text = case.legal_issue.lower()
     if "mold" in issue_text:
-        doc.add_paragraph("This case involves mold, which raises significant habitability concerns under the Residential Tenancies Act.")
+        doc.add_paragraph("This case involves mold, which raises habitability concerns.")
     if "eviction" in issue_text:
-        doc.add_paragraph("The tenant may be facing an unlawful eviction, requiring urgent legal remedy.")
+        doc.add_paragraph("Potential unlawful eviction in breach of tenancy law.")
     if "harassment" in issue_text:
-        doc.add_paragraph("The tenant reports sustained harassment, affecting quiet enjoyment of the rental unit.")
+        doc.add_paragraph("Tenant reports harassment affecting quiet enjoyment.")
 
-    # Save file
-    output_dir = "generated_forms"
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, f"{province}_{form_type}_case{case.id}.docx")
-    doc.save(output_path)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    docx_path = os.path.join(OUTPUT_DIR, f"{province}_{form_type}_case{case.id}.docx")
+    doc.save(docx_path)
 
-    return output_path
+    return docx_path
+
+def convert_to_pdf(docx_path):
+    if not os.path.exists(docx_path):
+        raise FileNotFoundError("DOCX file not found for PDF conversion.")
+
+    pdf_path = docx_path.replace(".docx", ".pdf")
+    output = pypandoc.convert_file(docx_path, 'pdf', outputfile=pdf_path)
+    return pdf_path
