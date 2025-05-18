@@ -57,3 +57,18 @@ class Payment(db.Model):
     payment_id = db.Column(db.String(150), nullable=True)
     status = db.Column(db.String(50), default="pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    class LegalReference(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey('case.id'), nullable=False)
+    title = db.Column(db.String(255))
+    url = db.Column(db.String(512))
+    snippet = db.Column(db.Text)
+    citation = db.Column(db.String(255))
+    court = db.Column(db.String(255))
+    date = db.Column(db.String(64))
+    source_type = db.Column(db.String(50))  # e.g., "canlii", "legislation", "steps-to-justice"
+    relevance = db.Column(db.Float)
+
+    def __repr__(self):
+        return f"<LegalReference {self.title} from {self.source_type}>"
