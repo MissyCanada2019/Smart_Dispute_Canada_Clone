@@ -9,7 +9,7 @@ def verify_paypal_payment(payment_id, expected_amount):
         client_id = os.getenv("PAYPAL_CLIENT_ID")
         secret = os.getenv("PAYPAL_SECRET")
 
-        # Get OAuth token
+        # Get OAuth token from PayPal
         auth_response = requests.post(
             "https://api-m.paypal.com/v1/oauth2/token",
             auth=(client_id, secret),
@@ -17,24 +17,41 @@ def verify_paypal_payment(payment_id, expected_amount):
             data={"grant_type": "client_credentials"},
         )
 
-        access_token = auth_response.json().get("access_token")
-        if not access_token:
+        if auth_response.status_code != 200:
+            print("PayPal auth failed:", auth_response.text)
             return "failed"
 
-        # Check payment capture status
+        access_token = auth_response.json().get("access_token")
+        if not access_token:
+            print("Access token not received from PayPal")
+            return "failed"
+
+        # Check the payment capture status
         payment_response = requests.get(
             f"https://api-m.paypal.com/v2/payments/captures/{payment_id}",
             headers={"Authorization": f"Bearer {access_token}"}
         )
-        data = payment_response.json()
 
-        if data.get("status") == "COMPLETED":
-            paid = float(data["amount"]["value"])
-            currency = data["amount"]["currency_code"]
-            if currency != "CAD" or abs(paid - float(expected_amount)) > 0.01:
+        if payment_response.status_code != 200:
+            print("Payment lookup failed:", payment_response.text)
+            return "failed"
+
+        data = payment_response.json()
+        status = data.get("status")
+        paid_amount = float(data["amount"]["value"])
+        currency = data["amount"]["currency_code"]
+
+        if status == "COMPLETED":
+            if currency != "CAD":
+                print("Currency mismatch:", currency)
+                return "mismatch"
+            if abs(paid_amount - float(expected_amount)) > 0.01:
+                print("Amount mismatch:", paid_amount)
                 return "mismatch"
             return "completed"
-        return "pending"
+        else:
+            return "pending"
+
     except Exception as e:
-        print("PayPal verification error:", e)
+        print("PayPal verification error:", str(e))
         return "failed"
