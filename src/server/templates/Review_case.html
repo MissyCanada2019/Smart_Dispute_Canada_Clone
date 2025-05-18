@@ -3,47 +3,60 @@
 {% block content %}
 <div class="container mt-5">
   <h3 class="text-danger">Case Review</h3>
+
   <p><strong>Suggested Form:</strong> {{ form_info.form_name }}</p>
   <p><strong>Court:</strong> {{ form_info.court }}</p>
   <p><strong>Merit Score:</strong> {{ merit_score }}%</p>
   <p>{{ explanation }}</p>
 
   <div class="alert alert-warning">
-    <strong>To unlock your form:</strong><br>
-    Pay <strong>$9.99</strong> securely with PayPal or send e-transfer to <br>
+    <strong>To unlock your legal form:</strong><br>
+    Pay <strong>$9.99</strong> via PayPal or send an e-transfer to:<br>
     <strong>smartdisputecanada@gmail.com</strong>
   </div>
 
-  <form id="etransfer-form" method="POST" action="{{ url_for('confirm_payment', case_id=case.id) }}">
+  <!-- E-Transfer Confirmation -->
+  <form id="etransfer-form" method="POST" action="{{ url_for('main.confirm_payment', case_id=case.id) }}">
     <input type="hidden" name="payment_id" value="manual-e-transfer">
     <button class="btn btn-secondary">I Paid by E-Transfer</button>
   </form>
 
+  <hr>
+
+  <!-- PayPal Smart Buttons -->
+  <h4>Pay with PayPal</h4>
   <div id="paypal-button-container" class="mt-3"></div>
+
+  <!-- PayPal Hidden Submit Form -->
+  <form id="paypal-confirm-form" method="POST" action="{{ url_for('main.paypal_confirm', case_id=case.id) }}">
+    <input type="hidden" name="payment_id" id="paypal-payment-id">
+  </form>
 </div>
 
-<script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=CAD"></script>
+<!-- PayPal JS SDK with your LIVE CLIENT ID -->
+<script src="https://www.paypal.com/sdk/js?client-id=ARsm9AAW9tT9M4IgU6IzGQbOGB1EdTnl5_jni5Ej1Zkyh2XjdxSftBFiZhAkcStiKiASldayU_GIPlKp&currency=CAD"></script>
 <script>
-paypal.Buttons({
-  createOrder: function(data, actions) {
-    return actions.order.create({
-      purchase_units: [{ amount: { value: '9.99' } }]
-    });
-  },
-  onApprove: function(data, actions) {
-    return actions.order.capture().then(function(details) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '{{ url_for("confirm_payment", case_id=case.id) }}';
-      const hiddenField = document.createElement('input');
-      hiddenField.type = 'hidden';
-      hiddenField.name = 'payment_id';
-      hiddenField.value = data.orderID;
-      form.appendChild(hiddenField);
-      document.body.appendChild(form);
-      form.submit();
-    });
-  }
-}).render('#paypal-button-container');
+  paypal.Buttons({
+    createOrder: function(data, actions) {
+      return actions.order.create({
+        purchase_units: [{
+          amount: {
+            value: '9.99',
+            currency_code: 'CAD'
+          }
+        }]
+      });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        // Send payment_id to Flask
+        document.getElementById('paypal-payment-id').value = details.id;
+        document.getElementById('paypal-confirm-form').submit();
+      });
+    },
+    onError: function(err) {
+      alert("PayPal error: " + err);
+    }
+  }).render('#paypal-button-container');
 </script>
 {% endblock %}
