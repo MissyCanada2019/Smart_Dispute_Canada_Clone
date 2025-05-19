@@ -2,7 +2,7 @@ import os
 from docx import Document
 from datetime import datetime
 
-TEMPLATE_DIR = "templates/forms"
+TEMPLATE_DIR = "src/server/templates/forms"
 OUTPUT_DIR = "generated_forms"
 
 def generate_docx(case, user, form_type="repair_request"):
