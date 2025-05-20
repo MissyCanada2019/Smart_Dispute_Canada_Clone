@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
-from src.server.services.case_service import handle_upload, prepare_review_data
+from src.server.case_service import handle_upload, prepare_review_data
 from src.server.services.payment_service import confirm_e_transfer, confirm_paypal_payment
 from src.models import Case
 
