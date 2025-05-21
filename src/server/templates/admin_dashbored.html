@@ -43,14 +43,14 @@
                             </td>
                             <td>
                                 {% if not user.admin %}
-                                <form method="POST" action="{{ url_for('promote_user', user_id=user.id) }}" style="display:inline;">
+                                <form method="POST" action="{{ url_for('admin_bp.promote_user', user_id=user.id) }}" style="display:inline;">
                                     {{ csrf_token() }}
                                     <button class="btn btn-sm btn-outline-light">Promote to Admin</button>
                                 </form>
                                 {% endif %}
 
                                 {% if user.subscription != 'unlimited' %}
-                                <form method="POST" action="{{ url_for('upgrade_user', user_id=user.id) }}" style="display:inline;">
+                                <form method="POST" action="{{ url_for('admin_bp.upgrade_user', user_id=user.id) }}" style="display:inline;">
                                     {{ csrf_token() }}
                                     <button class="btn btn-sm btn-outline-warning">Upgrade to Unlimited</button>
                                 </form>
