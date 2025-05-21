@@ -7,11 +7,12 @@ from flask_migrate import Migrate
 from src.server.extensions import db, login_manager
 from src.server.routes import main
 from src.server.auth_routes import auth
+from src.server.admin_cases import admin_bp  # <-- NEW: Admin blueprint
 
 def create_app():
     app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
 
-    # Config: Secure, production-friendly with Render PostgreSQL
+    # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -19,16 +20,25 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
-    Migrate(app, db)  # Enable Flask-Migrate
+    Migrate(app, db)
 
     # Register Blueprints
-    app.register_blueprint(main)
-    app.register_blueprint(auth)
+    app.register_blueprint(main)           # User routes
+    app.register_blueprint(auth)           # Auth routes
+    app.register_blueprint(admin_bp)       # Admin dashboard routes
 
-    # Shell context for `flask shell`
+    # Shell context for flask shell
     @app.shell_context_processor
     def make_shell_context():
         from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
-        return {"db": db, "User": User, "Case": Case, "Evidence": Evidence, "Payment": Payment, "LegalReference": LegalReference, "FormTemplate": FormTemplate}
+        return {
+            "db": db,
+            "User": User,
+            "Case": Case,
+            "Evidence": Evidence,
+            "Payment": Payment,
+            "LegalReference": LegalReference,
+            "FormTemplate": FormTemplate
+        }
 
     return app
