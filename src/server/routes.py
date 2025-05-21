@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
+
+from src.models import Case
 from src.server.case_service import handle_upload, prepare_review_data
 from src.server.services.payment_service import confirm_e_transfer, confirm_paypal_payment
-from src.models import Case
+from src.server.services.doc_service import get_preview_path, get_download_path
 
 main = Blueprint("main", __name__)
 
@@ -42,14 +44,12 @@ def review_case(case_id):
 @main.route("/preview/<int:case_id>")
 @login_required
 def preview_case(case_id):
-    from src.server.services.doc_service import get_preview_path
     path = get_preview_path(case_id, current_user)
     return send_file(path, as_attachment=False)
 
 @main.route("/download/<int:case_id>")
 @login_required
 def download_legal_package(case_id):
-    from src.server.services.doc_service import get_download_path
     path = get_download_path(case_id, current_user)
     if not path:
         flash("Complete payment or subscribe to download.", "warning")
