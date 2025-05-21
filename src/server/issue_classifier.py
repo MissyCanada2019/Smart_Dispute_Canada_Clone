@@ -1,6 +1,6 @@
 import re
 
-# Define legal categories and trigger keywords
+# Trigger terms for each legal issue category
 LEGAL_ISSUES = {
     "landlord-tenant": [
         "eviction", "rent", "repair", "landlord", "lease", "N4", "maintenance", "bedbug", "mold", "housing"
@@ -22,28 +22,25 @@ LEGAL_ISSUES = {
     ]
 }
 
-def classify_legal_issue(text: str) -> dict:
+def classify_legal_issue(text: str) -> tuple[str, list[str], float]:
     """
-    Classify the legal issue based on the uploaded content.
-    Returns a dictionary with category and matched keywords.
+    Classifies the text into a legal category based on keyword matches.
+    
+    Returns:
+        - category (str): the best-matching category
+        - matched_keywords (list): keywords found in text
+        - confidence (float): match strength from 0.0 to 1.0
     """
     matched = {}
+
     for category, keywords in LEGAL_ISSUES.items():
         found = [kw for kw in keywords if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
         if found:
             matched[category] = found
 
     if matched:
-        # Pick the category with the most matches
-        best_match = max(matched.items(), key=lambda item: len(item[1]))
-        return {
-            "category": best_match[0],
-            "matched_keywords": best_match[1],
-            "confidence": len(best_match[1]) / len(LEGAL_ISSUES[best_match[0]])
-        }
-    else:
-        return {
-            "category": "unknown",
-            "matched_keywords": [],
-            "confidence": 0.0
-        }
+        best_category, hits = max(matched.items(), key=lambda item: len(item[1]))
+        confidence = len(hits) / len(LEGAL_ISSUES[best_category])
+        return best_category, hits, confidence
+
+    return "unknown", [], 0.0
