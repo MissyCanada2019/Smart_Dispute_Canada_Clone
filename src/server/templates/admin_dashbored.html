@@ -1,8 +1,18 @@
 {% extends "base.html" %}
-
 {% block title %}Admin Dashboard | SmartDispute.ai{% endblock %}
 
 {% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-danger">Admin Dashboard</h2>
+
+    <form method="GET" class="row mb-4">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="Search by name or email..." value="{{ request.args.get('search', '') }}">
+        </div>
+        <div class="col-md-3">
+            <select name="subscription" class="form-select">
+                <option value="">All Subscriptions</option>
+                <option value="free"
 <div class="container mt-5">
     <h2 class="mb-4 text-danger">Admin Dashboard</h2>
 
