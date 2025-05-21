@@ -10,7 +10,16 @@ from src.server.auth_routes import auth
 from src.server.admin_cases import admin_bp
 app.register_blueprint(admin_bp)  # <-- NEW: Admin blueprint
 
-def create_app():
+def def create_app():
+    app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
+
+    # Config
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
+
+    # Init extensions
+    db.init_app(app)
+    login_manager.init_app(app)
+    csrf.init_app(app)  # <-- CSRF protection here
     app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
 
     # Configuration
