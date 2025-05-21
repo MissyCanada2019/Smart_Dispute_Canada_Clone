@@ -19,3 +19,4 @@ weasyprint==59.0
 beautifulsoup4
 scikit-learn
 psycopg2-binary
+Flask-WTF
