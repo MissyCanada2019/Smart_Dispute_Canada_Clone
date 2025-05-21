@@ -7,7 +7,8 @@ from flask_migrate import Migrate
 from src.server.extensions import db, login_manager
 from src.server.routes import main
 from src.server.auth_routes import auth
-from src.server.admin_cases import admin_bp  # <-- NEW: Admin blueprint
+from src.server.admin_cases import admin_bp
+app.register_blueprint(admin_bp)  # <-- NEW: Admin blueprint
 
 def create_app():
     app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
