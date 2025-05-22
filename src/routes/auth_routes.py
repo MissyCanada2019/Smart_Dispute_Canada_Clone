@@ -1,6 +1,5 @@
-from flask import Blueprint, request, render_template, redirect, url_for, flash
-from flask_login import login_user
-from services.user_service import register_user
+from flask import Blueprint, request, redirect, url_for, render_template, flash
+from src.services.user_services import register_user
 from src.models import User
 
 auth_bp = Blueprint("auth", __name__)
@@ -10,18 +9,16 @@ def register():
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
-        first_name = request.form.get("first_name")
-        last_name = request.form.get("last_name")
+        full_name = request.form.get("full_name")
 
         try:
-            user = register_user(email, password, first_name, last_name)
-            flash("Registration successful. You can now log in.", "success")
+            user = register_user(email, password, full_name)
+            flash("Registration successful! Please check your email to confirm your account.", "success")
             return redirect(url_for("auth.login"))
         except ValueError as e:
             flash(str(e), "danger")
 
     return render_template("register.html")
-
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
