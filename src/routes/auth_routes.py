@@ -60,3 +60,11 @@ def confirm_email(token):
         flash("Email confirmed! You can now log in.", "success")
 
     return redirect(url_for("auth.login"))
+from flask_login import logout_user, login_required
+
+@auth_bp.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You've been logged out.", "info")
+    return redirect(url_for("auth.login"))
