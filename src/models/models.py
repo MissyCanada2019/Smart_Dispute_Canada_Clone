@@ -1,5 +1,6 @@
 from src.server.extensions import db
 from flask_login import UserMixin
+from werkzeug.security import check_password_hash
 from datetime import datetime
 
 class User(UserMixin, db.Model):
@@ -14,10 +15,32 @@ class User(UserMixin, db.Model):
     subscription_type = db.Column(db.String(50), default="free")
     subscription_end = db.Column(db.DateTime, nullable=True)
     is_admin = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(50), default="user")
 
     cases = db.relationship('Case', backref='user', lazy=True)
     evidence = db.relationship('Evidence', backref='user', lazy=True)
     payments = db.relationship('Payment', backref='user', lazy=True)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def generate_confirmation_token(self):
+        from itsdangerous import URLSafeTimedSerializer
+        from flask import current_app
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return serializer.dumps(self.email, salt='email-confirm')
+
+    @staticmethod
+    def verify_confirmation_token(token, expiration=3600):
+        from itsdangerous import URLSafeTimedSerializer
+        from flask import current_app
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            email = serializer.loads(token, salt='email-confirm', max_age=expiration)
+        except Exception:
+            return None
+        return email
 
 
 class Case(db.Model):
