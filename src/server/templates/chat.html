@@ -1,9 +1,12 @@
-{% extends 'base.html' %}
-
-{% block title %}AI Legal Assistant | SmartDispute.ai{% endblock %}
-
-{% block extra_css %}
-<style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Legal Assistant | SmartDispute.ai</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
     .chat-container {
         height: 60vh;
         overflow-y: auto;
@@ -11,158 +14,163 @@
         background-color: rgba(0, 0, 0, 0.2);
         border-radius: 0.5rem;
     }
-    
     .chat-input-container {
         position: relative;
     }
-    
     .chat-input {
         resize: none;
         padding-right: 50px;
         min-height: 60px;
     }
-    
     .send-button {
         position: absolute;
         bottom: 10px;
         right: 10px;
     }
-    
     .context-badge {
         background-color: var(--sd-primary);
         font-size: 0.8rem;
     }
-</style>
-{% endblock %}
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
 
-{% block content %}
-<div class="mb-4">
-    <h1>AI Legal Assistant</h1>
-    <p class="text-muted">Get guidance on your legal situation from our AI assistant.</p>
-</div>
-
-<div class="row">
-    <div class="col-lg-9">
-        <div class="card bg-dark shadow mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">
-                    Chat with Legal AI
-                    {% if session.case_id %}
-                        <span class="badge context-badge ms-2">Case Context: Active</span>
-                    {% endif %}
-                </h4>
-                <div>
-                    <select id="caseSelect" class="form-select form-select-sm" style="width: auto;">
-                        <option value="">No specific case (general questions)</option>
-                        {% for case in cases %}
-                            <option value="{{ case.id }}" {% if session.case_id == case.id %}selected{% endif %}>
-                                {{ case.title }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div id="chatMessages" class="chat-container">
-                    {% if not messages %}
-                        <!-- Welcome message -->
-                        <div class="chat-message ai-message">
-                            <p>👋 Hello! I'm your AI legal assistant. I can help with:</p>
-                            <ul>
-                                <li>Explaining your legal rights in Canada</li>
-                                <li>Guiding you through forms and documentation</li>
-                                <li>Suggesting evidence to strengthen your case</li>
-                                <li>Explaining legal terminology</li>
-                            </ul>
-                            <p>How can I assist you today?</p>
-                        </div>
-                    {% else %}
-                        <!-- Previous messages -->
-                        {% for message in messages %}
-                            <div class="chat-message {% if message.is_user %}user-message{% else %}ai-message{% endif %}">
-                                {{ message.message|safe }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-            </div>
-            <div class="card-footer">
-                <form id="chatForm" class="chat-input-container">
-                    <input type="hidden" id="sessionId" value="{{ session.id }}">
-                    <textarea id="messageInput" class="form-control chat-input" 
-                              placeholder="Type your question here..." required></textarea>
-                    <button type="submit" class="btn btn-primary send-button">
-                        <i class="feather-send"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
+    <!-- Header with Logout -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>AI Legal Assistant</h2>
+      {% if current_user.is_authenticated %}
+        <form method="GET" action="{{ url_for('auth.logout') }}">
+          <button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button>
+        </form>
+      {% endif %}
     </div>
-    
-    <div class="col-lg-3">
+
+    <div class="row">
+      <!-- Chat Interface -->
+      <div class="col-lg-9">
         <div class="card bg-dark shadow mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Helpful Topics</h5>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              Chat with Legal AI
+              {% if session.case_id %}
+                <span class="badge context-badge ms-2">Case Context: Active</span>
+              {% endif %}
+            </h4>
+            <div>
+              <select id="caseSelect" class="form-select form-select-sm" style="width: auto;">
+                <option value="">No specific case (general questions)</option>
+                {% for case in cases %}
+                  <option value="{{ case.id }}" {% if session.case_id == case.id %}selected{% endif %}>
+                    {{ case.title }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-light text-start suggestion-btn">
-                        What are my rights as a tenant in Ontario?
-                    </button>
-                    <button class="btn btn-outline-light text-start suggestion-btn">
-                        How do I dispute an error on my credit report?
-                    </button>
-                    <button class="btn btn-outline-light text-start suggestion-btn">
-                        What evidence do I need for my case?
-                    </button>
-                    <button class="btn btn-outline-light text-start suggestion-btn">
-                        How do I fill out this form correctly?
-                    </button>
-                    <button class="btn btn-outline-light text-start suggestion-btn">
-                        What happens after I submit my documents?
-                    </button>
+          </div>
+          <div class="card-body p-0">
+            <div id="chatMessages" class="chat-container">
+              {% if not messages %}
+                <div class="chat-message ai-message">
+                  <p>👋 Hello! I'm your AI legal assistant. I can help with:</p>
+                  <ul>
+                    <li>Explaining your legal rights in Canada</li>
+                    <li>Guiding you through forms and documentation</li>
+                    <li>Suggesting evidence to strengthen your case</li>
+                    <li>Explaining legal terminology</li>
+                  </ul>
+                  <p>How can I assist you today?</p>
                 </div>
+              {% else %}
+                {% for message in messages %}
+                  <div class="chat-message {% if message.is_user %}user-message{% else %}ai-message{% endif %}">
+                    {{ message.message|safe }}
+                  </div>
+                {% endfor %}
+              {% endif %}
             </div>
+          </div>
+          <div class="card-footer">
+            <form id="chatForm" class="chat-input-container">
+              <input type="hidden" id="sessionId" value="{{ session.id }}">
+              <textarea id="messageInput" class="form-control chat-input" placeholder="Type your question here..." required></textarea>
+              <button type="submit" class="btn btn-primary send-button">
+                <i class="feather-send"></i>
+              </button>
+            </form>
+          </div>
         </div>
-        
+      </div>
+
+      <!-- Suggestions + Disclaimer -->
+      <div class="col-lg-3">
+        <div class="card bg-dark shadow mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Helpful Topics</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-outline-light text-start suggestion-btn">
+                What are my rights as a tenant in Ontario?
+              </button>
+              <button class="btn btn-outline-light text-start suggestion-btn">
+                How do I dispute an error on my credit report?
+              </button>
+              <button class="btn btn-outline-light text-start suggestion-btn">
+                What evidence do I need for my case?
+              </button>
+              <button class="btn btn-outline-light text-start suggestion-btn">
+                How do I fill out this form correctly?
+              </button>
+              <button class="btn btn-outline-light text-start suggestion-btn">
+                What happens after I submit my documents?
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="card bg-dark shadow">
-            <div class="card-header">
-                <h5 class="mb-0">Legal Disclaimer</h5>
-            </div>
-            <div class="card-body">
-                <p class="small text-muted mb-0">
-                    The AI assistant provides general information based on Canadian law, not personalized legal advice. 
-                    For complex situations, consult with a qualified legal professional. Information provided 
-                    is not guaranteed for accuracy or applicability to your specific circumstances.
-                </p>
-            </div>
+          <div class="card-header">
+            <h5 class="mb-0">Legal Disclaimer</h5>
+          </div>
+          <div class="card-body">
+            <p class="small text-muted mb-0">
+              The AI assistant provides general information based on Canadian law, not personalized legal advice. 
+              For complex situations, consult a qualified legal professional. Information is not guaranteed to be accurate or applicable to your specific circumstances.
+            </p>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-<script>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+  <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Scroll to bottom of chat
-        scrollChatToBottom();
-        
-        // Handle suggestion buttons
-        const suggestionButtons = document.querySelectorAll('.suggestion-btn');
-        suggestionButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('messageInput').value = this.textContent.trim();
-                document.getElementById('messageInput').focus();
-            });
+      const suggestionButtons = document.querySelectorAll('.suggestion-btn');
+      suggestionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          document.getElementById('messageInput').value = this.textContent.trim();
+          document.getElementById('messageInput').focus();
         });
-        
-        // Auto-resize textarea
-        const messageInput = document.getElementById('messageInput');
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+      });
+
+      const messageInput = document.getElementById('messageInput');
+      messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+
+      function scrollChatToBottom() {
+        const chat = document.getElementById('chatMessages');
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      scrollChatToBottom();
     });
-</script>
-{% endblock %}
+  </script>
+</body>
+</html>
