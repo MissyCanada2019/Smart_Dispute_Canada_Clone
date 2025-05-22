@@ -20,19 +20,168 @@
       {% endif %}
     </div>
 
-    <!-- Begin original page content (breadcrumb, metrics, analysis, etc.) -->
-    
-    <!-- Paste everything from your original analyze.html between here... -->
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">My Cases</a></li>
+        <li class="breadcrumb-item active">Case Analysis</li>
+      </ol>
+    </nav>
 
-    <!-- ...and here -->
+    <p class="text-muted">
+      Uploaded on {{ case.created_at.strftime('%B %d, %Y') }} • 
+      Category: <span class="badge bg-secondary">{{ case.category.replace('-', ' ').title() }}</span>
+    </p>
+
+    <div class="row">
+      <!-- Merit Score Column -->
+      <div class="col-md-4 mb-4">
+        <div class="card bg-dark h-100 shadow">
+          <div class="card-body text-center">
+            <h4 class="card-title mb-4">Case Merit Score</h4>
+            <div class="merit-score" data-score="{{ merit_score }}">
+              {{ (merit_score * 100)|int }}%
+            </div>
+            <p class="mt-4">
+              {% if merit_score >= 0.7 %}
+                <span class="badge bg-success">Strong Case</span>
+                <p class="mt-2">Your evidence strongly supports your position.</p>
+              {% elif merit_score >= 0.4 %}
+                <span class="badge bg-warning">Moderate Case</span>
+                <p class="mt-2">Your case has merit but could benefit from additional evidence.</p>
+              {% else %}
+                <span class="badge bg-danger">Weak Case</span>
+                <p class="mt-2">Your case needs stronger evidence to support your position.</p>
+              {% endif %}
+            </p>
+            <div class="mt-4">
+              <a href="{{ url_for('chat', case_id=case.id) }}" class="btn btn-outline-primary">
+                <i class="feather-help-circle me-2"></i> Ask AI for Help
+              </a>
+            </div>
+          </div>
+          <div class="card-footer text-muted">
+            <small>Score based on evidence strength, issue clarity, and relevant law.</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Column -->
+      <div class="col-md-8 mb-4">
+        <div class="card bg-dark h-100 shadow">
+          <div class="card-header">
+            <h4 class="mb-0">AI Analysis Results</h4>
+          </div>
+          <div class="card-body">
+            <h5 class="mb-3">Detected Legal Issues</h5>
+            {% if analysis.detected_issues %}
+              <div class="list-group mb-4">
+                {% for issue in analysis.detected_issues %}
+                  <div class="list-group-item bg-dark border-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h6 class="mb-1">{{ issue.name }}</h6>
+                      <span class="badge bg-info">Match: {{ issue.score }}</span>
+                    </div>
+                    <p class="mb-1 small">{{ issue.description }}</p>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted">No legal issues detected. Try uploading more evidence.</p>
+            {% endif %}
+
+            <h5 class="mb-3">Key Information Extracted</h5>
+            <div class="row">
+              {% if analysis.dates %}
+                <div class="col-md-6 mb-3">
+                  <h6>Important Dates</h6>
+                  <ul class="list-unstyled text-muted ms-3">
+                    {% for date in analysis.dates[:5] %}
+                      <li>{{ date }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+              {% if analysis.names %}
+                <div class="col-md-6 mb-3">
+                  <h6>People Mentioned</h6>
+                  <ul class="list-unstyled text-muted ms-3">
+                    {% for name in analysis.names[:5] %}
+                      <li>{{ name }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Analyzed {{ case.updated_at.strftime('%B %d, %Y') }}</span>
+              <a href="{{ url_for('generate', case_id=case.id) }}" class="btn btn-primary">
+                Generate Legal Documents
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Uploaded Documents -->
+    <div class="card bg-dark shadow my-4">
+      <div class="card-header">
+        <h4 class="mb-0">Uploaded Documents</h4>
+      </div>
+      <div class="card-body">
+        {% if documents %}
+          <ul class="list-group">
+            {% for doc in documents %}
+              <li class="list-group-item bg-dark border-light">
+                {{ doc.filename }} <small class="text-muted">— {{ doc.uploaded_at.strftime('%b %d, %Y') }}</small>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No documents uploaded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recommended Forms -->
+    <div class="card bg-dark shadow mb-4">
+      <div class="card-header">
+        <h4 class="mb-0">Recommended Forms</h4>
+      </div>
+      <div class="card-body">
+        {% if recommended_forms %}
+          <div class="row">
+            {% for form in recommended_forms %}
+              <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ form.name }}</h5>
+                    <p class="card-text text-muted">{{ form.description }}</p>
+                  </div>
+                  <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('generate', case_id=case.id) }}?form={{ form.id }}" class="btn btn-primary btn-sm">
+                      Generate this Form
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No recommended forms yet for this case.</p>
+        {% endif %}
+      </div>
+    </div>
 
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Initialize merit score animation
-      initMeritScores();
+      // Placeholder for merit score animation if needed
     });
   </script>
 </body>
