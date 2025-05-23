@@ -1,3 +1,5 @@
+# src/server/__init__.py
+
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -5,10 +7,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 
-# Extensions
 from src.server.extensions import db, login_manager
-
-# Blueprints (correct imports from new folder)
 from src.routes.main_routes import main as main_bp
 from src.routes.auth_routes import auth_bp
 from src.routes.admin_cases import admin_bp
@@ -36,7 +35,7 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(doc_bp)
 
-    # Shell context for `flask shell`
+    # Shell context
     @app.shell_context_processor
     def make_shell_context():
         from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
