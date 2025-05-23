@@ -1,28 +1,16 @@
-So where do I put this now ??  
-
 from flask import Blueprint, send_file, redirect, url_for, flash
 from flask_login import login_required, current_user
-from src.models import Case
-from src.server.doc_generator import generate_docx  # your actual generator path
+from src.server.services.doc_service import get_download_path
 
 doc_bp = Blueprint("doc", __name__)
 
 @doc_bp.route("/generate/<int:case_id>")
 @login_required
 def generate_document(case_id):
-    case = Case.query.filter_by(id=case_id, user_id=current_user.id).first()
-    if not case:
-        flash("Access denied or case not found.", "danger")
+    path, error = get_download_path(case_id, current_user)
+
+    if error:
+        flash(error, "danger")
         return redirect(url_for("main.dashboard"))
 
-    try:
-        docx_path = generate_docx(case, current_user)
-        return send_file(docx_path, as_attachment=True)
-    except FileNotFoundError as e:
-        flash(str(e), "danger")
-        return redirect(url_for("main.dashboard"))
-
-
-
-
-
+    return send_file(path, as_attachment=True)
