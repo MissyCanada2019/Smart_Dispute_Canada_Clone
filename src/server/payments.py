@@ -3,12 +3,15 @@ import requests
 
 def verify_paypal_payment(payment_id, expected_amount):
     """
-    Verifies a PayPal payment by contacting the PayPal API using the client ID and secret.
-    Returns one of: 'completed', 'mismatch', 'pending', or 'failed'.
+    Verifies a PayPal payment capture using PayPal's API.
+    Returns: 'completed', 'mismatch', 'pending', or 'failed'.
     """
     try:
         client_id = os.getenv("PAYPAL_CLIENT_ID")
         secret = os.getenv("PAYPAL_SECRET")
+        if not client_id or not secret:
+            print("Missing PayPal credentials.")
+            return "failed"
 
         # Get access token
         auth_response = requests.post(
@@ -24,9 +27,10 @@ def verify_paypal_payment(payment_id, expected_amount):
 
         access_token = auth_response.json().get("access_token")
         if not access_token:
+            print("No access token received.")
             return "failed"
 
-        # Verify the payment capture
+        # Fetch payment details
         payment_response = requests.get(
             f"https://api-m.paypal.com/v2/payments/captures/{payment_id}",
             headers={"Authorization": f"Bearer {access_token}"}
@@ -43,13 +47,10 @@ def verify_paypal_payment(payment_id, expected_amount):
         currency = amount_info.get("currency_code", "CAD")
 
         if status == "COMPLETED":
-            if currency != "CAD":
-                return "mismatch"
-            if abs(paid - float(expected_amount)) > 0.01:
+            if currency != "CAD" or abs(paid - float(expected_amount)) > 0.01:
                 return "mismatch"
             return "completed"
-        else:
-            return "pending"
+        return "pending"
 
     except Exception as e:
         print("PayPal verification error:", str(e))
