@@ -22,6 +22,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    from src.server import login_setup
     Migrate(app, db)
     csrf.init_app(app)
 
