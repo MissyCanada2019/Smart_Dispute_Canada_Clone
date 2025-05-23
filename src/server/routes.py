@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
-
-from src.server.case_service import handle_upload, prepare_review_data
+from src.models import Case, db
+from src.server.case_service import prepare_review_data
 from src.server.services.payment_service import confirm_e_transfer, confirm_paypal_payment
 from src.server.services.doc_service import get_preview_path, get_download_path
+from src.server.merit_weight import score_merit
 
 main = Blueprint("main", __name__)
 
@@ -15,15 +16,46 @@ def home():
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    from src.models import Case
     cases = Case.query.filter_by(user_id=current_user.id).all()
     return render_template("dashboard.html", cases=cases)
+
+
+@main.route("/create", methods=["GET", "POST"])
+@login_required
+def create_case():
+    if request.method == "POST":
+        title = request.form.get("title")
+        description = request.form.get("description")
+
+        if not title or not description:
+            flash("Both title and description are required.", "danger")
+            return redirect(url_for("main.create_case"))
+
+        # Run AI merit scoring
+        user_province = current_user.province or "ON"
+        result = score_merit(description, issue_category="General", province=user_province)
+
+        new_case = Case(
+            user_id=current_user.id,
+            title=title,
+            description=description,
+            legal_issue=result["precedent_used"],
+            matched_keywords=", ".join(result["reasons"]),
+            confidence_score=result["merit_score"] / 100  # stored as 0.0 - 1.0 float
+        )
+
+        db.session.add(new_case)
+        db.session.commit()
+
+        flash("Case created and analyzed successfully.", "success")
+        return redirect(url_for("main.review_case", case_id=new_case.id))
+
+    return render_template("create_case.html")
 
 
 @main.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
-    from src.models import Case
     if request.method == "POST":
         return handle_upload(request, current_user)
 
