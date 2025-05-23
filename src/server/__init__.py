@@ -14,7 +14,7 @@ from src.server.doc_routes import doc_bp  # This should be here if used
 csrf = CSRFProtect()
 
 def create_app():
-    app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
+src/server/../../templates => src/templates/
 
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
