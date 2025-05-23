@@ -3,17 +3,11 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect  # <-- CSRF protection
+from flask_wtf.csrf import CSRFProtect
 
-# App extensions
 from src.server.extensions import db, login_manager
 
-# Blueprints
-from src.server.routes import main
-from src.server.auth_routes import auth
-from src.server.admin_cases import admin_bp
-
-csrf = CSRFProtect()  # Initialize CSRF
+csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
@@ -27,14 +21,17 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     Migrate(app, db)
-    csrf.init_app(app)  # CSRF protection enabled
+    csrf.init_app(app)
 
-    # Register Blueprints
+    # Register Blueprints (import *after* app & db are initialized)
+    from src.server.routes import main
+    from src.server.auth_routes import auth
+    from src.server.admin_cases import admin_bp
     app.register_blueprint(main)
     app.register_blueprint(auth)
     app.register_blueprint(admin_bp)
 
-    # Shell context for `flask shell`
+    # Safe shell context with delayed imports
     @app.shell_context_processor
     def make_shell_context():
         from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
