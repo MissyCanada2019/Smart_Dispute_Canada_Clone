@@ -1,10 +1,14 @@
 from datetime import datetime
-from src.models import db  # Safe to import at the top
+from flask import flash, redirect, url_for, request
+from src.models import db, Payment, Case
 from src.server.extensions import send_receipt
 from src.server.payments import verify_paypal_payment
 
-def record_e_transfer_payment(case, user):
-    from src.models import Payment  # Moved to avoid circular import
+def confirm_e_transfer(case_id, user):
+    case = Case.query.filter_by(id=case_id, user_id=user.id).first()
+    if not case:
+        flash("Access denied.", "danger")
+        return redirect(url_for("main.dashboard"))
 
     case.is_paid = True
     db.session.commit()
@@ -22,11 +26,21 @@ def record_e_transfer_payment(case, user):
     db.session.commit()
 
     send_receipt(user.email, case.title, "e-transfer")
+    flash("Payment confirmed. You can now download your documents.", "success")
+    return redirect(url_for("main.review_case", case_id=case.id))
 
-def record_paypal_payment(case, user, payment_id, expected_amount=9.99):
-    from src.models import Payment  # Same fix here
+def confirm_paypal_payment(req, case_id, user):
+    case = Case.query.filter_by(id=case_id, user_id=user.id).first()
+    if not case:
+        flash("Access denied.", "danger")
+        return redirect(url_for("main.dashboard"))
 
-    status = verify_paypal_payment(payment_id, expected_amount)
+    order_id = req.form.get("order_id")
+    if not order_id:
+        flash("Missing PayPal order ID.", "danger")
+        return redirect(url_for("main.review_case", case_id=case.id))
+
+    status = verify_paypal_payment(order_id, 9.99)
     if status == "completed":
         case.is_paid = True
         db.session.commit()
@@ -34,10 +48,10 @@ def record_paypal_payment(case, user, payment_id, expected_amount=9.99):
         payment = Payment(
             case_id=case.id,
             user_id=user.id,
-            amount=expected_amount,
+            amount=9.99,
             payment_type="legal_package",
             payment_method="paypal",
-            payment_id=payment_id,
+            payment_id=order_id,
             status="completed",
             created_at=datetime.utcnow()
         )
@@ -45,4 +59,8 @@ def record_paypal_payment(case, user, payment_id, expected_amount=9.99):
         db.session.commit()
 
         send_receipt(user.email, case.title, "PayPal")
-    return status
+        flash("Payment confirmed. You can now download your documents.", "success")
+    else:
+        flash("PayPal payment could not be verified.", "danger")
+
+    return redirect(url_for("main.review_case", case_id=case.id))
