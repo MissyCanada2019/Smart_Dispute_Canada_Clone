@@ -1,3 +1,18 @@
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
+
+from src.server.extensions import db, login_manager
+from src.routes.main_routes import main as main_bp
+from src.routes.auth_routes import auth_bp
+from src.routes.admin_cases import admin_bp
+from src.server.doc_routes import doc_bp  # Only include if this file exists
+
+csrf = CSRFProtect()
+
 def create_app():
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
