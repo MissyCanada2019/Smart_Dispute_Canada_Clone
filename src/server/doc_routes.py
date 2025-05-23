@@ -1,9 +1,9 @@
-# src/server/doc_routes.py
+So where do I put this now ??  
 
 from flask import Blueprint, send_file, redirect, url_for, flash
 from flask_login import login_required, current_user
 from src.models import Case
-from src.server.utils.document_generator import generate_docx
+from src.server.doc_generator import generate_docx  # your actual generator path
 
 doc_bp = Blueprint("doc", __name__)
 
@@ -21,3 +21,8 @@ def generate_document(case_id):
     except FileNotFoundError as e:
         flash(str(e), "danger")
         return redirect(url_for("main.dashboard"))
+
+
+
+
+
