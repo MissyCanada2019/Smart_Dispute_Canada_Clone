@@ -4,11 +4,18 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 
-csrf = CSRFProtect()
+from src.models import User  # Make sure this import works based on your structure
+
 # Initialize extensions
+csrf = CSRFProtect()
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
+
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Load Mailgun credentials from environment variables
 MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
