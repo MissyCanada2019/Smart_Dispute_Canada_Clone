@@ -1,11 +1,14 @@
-# src/server/services/doc_service.py
+from flask import send_file
+from src.models import Case
+from src.server.doc_generator import generate_docx
 
-from src.server.doc_generator import generate_docx  # or your docx generation logic
+def get_download_path(case_id, user):
+    case = Case.query.filter_by(id=case_id, user_id=user.id).first()
+    if not case:
+        return None, "Access denied or case not found."
 
-def get_download_path(case, user):
-    # Returns path to generated .docx file
-    return generate_docx(case, user)
-
-def get_preview_path(case, user):
-    # Optionally implement PDF preview logic if needed
-    return generate_docx(case, user)  # or generate_preview(case, user)
+    try:
+        docx_path = generate_docx(case, user)
+        return docx_path, None
+    except FileNotFoundError as e:
+        return None, str(e)
