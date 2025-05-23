@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>My Cases | SmartDispute.ai</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
   <div class="container mt-4">
-
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1>Welcome, {{ current_user.full_name }}!</h1>
@@ -26,56 +26,68 @@
       {% endif %}
     </p>
 
-    <!-- Sort and Create Button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <form method="get" action="{{ url_for('main.dashboard') }}">
-        <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
-          <option value="date" {% if sort == "date" %}selected{% endif %}>Sort by Date</option>
-          <option value="score" {% if sort == "score" %}selected{% endif %}>Sort by Merit Score</option>
-        </select>
-      </form>
+    <!-- New Case Button -->
+    <div class="text-end mb-4">
       <a href="{{ url_for('create_case') }}" class="btn btn-success">+ New Case</a>
     </div>
 
-    <!-- Case Cards -->
-    {% for case in cases %}
-      <div class="card mb-4 shadow">
-        <div class="card-body">
-          <h4 class="card-title">{{ case.title }}</h4>
-          <p class="card-text">
-            <strong>Status:</strong> {{ case.status.replace('_', ' ').capitalize() if case.status else 'N/A' }}<br>
-            <strong>Category:</strong> {{ case.category or 'N/A' }}<br>
-            <strong>Merit Score:</strong>
-            {% if case.confidence_score %}
-              <span class="badge 
-                {% if case.confidence_score >= 0.7 %} bg-success
-                {% elif case.confidence_score >= 0.4 %} bg-warning
-                {% else %} bg-danger
-                {% endif %}
-              ">
-                {{ (case.confidence_score * 100) | round(0) }}%
-              </span>
-            {% else %}
-              <span class="badge bg-secondary">N/A</span>
-            {% endif %}
-          </p>
+    <!-- User Case List -->
+    {% if cases %}
+      {% for case in cases %}
+        <div class="card mb-4 shadow">
+          <div class="card-body">
+            <h4 class="card-title">{{ case.title }}</h4>
+            <p class="card-text">
+              <strong>Status:</strong> {{ case.status.replace('_', ' ').capitalize() if case.status else "Unknown" }}<br>
+              <strong>Category:</strong> {{ case.legal_issue or "Not classified" }}<br>
+              <strong>Merit Score:</strong>
+              {% if case.confidence_score %}
+                {{ (case.confidence_score * 100)|round(2) }}/100
+              {% else %}
+                <span class="text-muted">Not Scored Yet</span>
+              {% endif %}
+            </p>
 
-          <div class="d-flex flex-wrap gap-2">
-            <a href="{{ url_for('main.upload') }}" class="btn btn-secondary btn-sm">Upload Evidence</a>
-            <a href="{{ url_for('generate_legal_package', case_id=case.id) }}" class="btn btn-primary btn-sm">Download Legal Package</a>
-            <a href="{{ url_for('generate_pdf_preview', case_id=case.id) }}" class="btn btn-outline-light btn-sm" target="_blank">Preview PDF</a>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="{{ url_for('main.upload') }}" class="btn btn-secondary btn-sm">Upload Evidence</a>
+              <a href="{{ url_for('main.download_legal_package', case_id=case.id) }}" class="btn btn-primary btn-sm">Download Legal Package</a>
+              <a href="{{ url_for('main.preview_case', case_id=case.id) }}" class="btn btn-outline-light btn-sm" target="_blank">Preview PDF</a>
 
-            {% if not case.is_paid and current_user.subscription_type != "unlimited" %}
-              <a href="{{ url_for('pay_for_case', case_id=case.id) }}" class="btn btn-warning btn-sm">Pay to Unlock</a>
-            {% endif %}
+              {% if not case.is_paid and current_user.subscription_type != "unlimited" %}
+                <form method="POST" action="{{ url_for('main.confirm_payment', case_id=case.id) }}">
+                  <button type="submit" class="btn btn-warning btn-sm">Pay to Unlock</button>
+                </form>
+              {% endif %}
+            </div>
           </div>
         </div>
-      </div>
+      {% endfor %}
     {% else %}
       <div class="alert alert-info text-center">
         You haven’t created any cases yet. Click <strong>+ New Case</strong> to get started!
       </div>
-    {% endfor %}
+    {% endif %}
+
+    <!-- Placeholder: Recently Scored Categories -->
+    <div class="mt-5">
+      <h4 class="text-light">Recently Scored Cases by Category</h4>
+      <p class="text-muted small">*This section will show the latest AI-scored cases grouped by legal category.</p>
+      <!-- Optional: Populate with backend variable 'recent_cases' -->
+      {% if recent_cases %}
+        {% for group in recent_cases %}
+          <h6 class="mt-3">{{ group.category }}</h6>
+          <ul class="list-group mb-3">
+            {% for c in group.cases %}
+              <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
+                {{ c.title }}
+                <span class="badge bg-primary">{{ (c.confidence_score * 100)|round(1) }}/100</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      {% endif %}
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
