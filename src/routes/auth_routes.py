@@ -1,5 +1,5 @@
 from flask import Blueprint, request, redirect, url_for, render_template, flash
-from flask_login import login_user logout_user, login_required
+from flask_login import logout_user, login_required  
 from src.services.user_services import register_user
 from src.models import User, db  # make sure db is imported
 
