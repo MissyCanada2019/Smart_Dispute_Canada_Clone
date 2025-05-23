@@ -8,11 +8,11 @@ import os
 # Extensions
 from src.server.extensions import db, login_manager
 
-# Blueprints
-from src.routes.auth_routes import auth_bp
-from src.routes.main_routes import main  # if you renamed `main.py`
-from src.routes.admin_cases import admin_bp
-from src.server.doc_routes import doc_bp  # <-- this was fine
+# Corrected Blueprint imports based on your folder structure
+from src.server.routes.auth_routes import auth_bp
+from src.server.routes.main_routes import main
+from src.server.routes.admin_cases import admin_bp
+from src.server.doc_routes import doc_bp
 
 csrf = CSRFProtect()
 
@@ -30,13 +30,13 @@ def create_app():
     Migrate(app, db)
     csrf.init_app(app)
 
-    # Register blueprints (do this **inside** the function)
+    # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(main)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(doc_bp)  # moved inside here
+    app.register_blueprint(doc_bp)
 
-    # Shell context for `flask shell`
+    # Shell context
     @app.shell_context_processor
     def make_shell_context():
         from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
