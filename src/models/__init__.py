@@ -106,4 +106,4 @@ class FormTemplate(db.Model):
     url = db.Column(db.String(500), nullable=False)
     jurisdiction = db.Column(db.String(50), default="ontario")
     file_type = db.Column(db.String(20), default="doc")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)ce, FormTemplate
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
