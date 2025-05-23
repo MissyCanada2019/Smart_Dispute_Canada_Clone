@@ -12,6 +12,8 @@ from src.routes.main_routes import main as main_bp
 from src.routes.auth_routes import auth_bp
 from src.routes.admin_cases import admin_bp
 from src.server.doc_routes import doc_bp
+...
+app.register_blueprint(doc_bp)
 
 csrf = CSRFProtect()
 
