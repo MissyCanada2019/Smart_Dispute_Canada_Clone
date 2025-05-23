@@ -1,17 +1,14 @@
 import sys
 import os
 
-# Ensure the src directory is in the Python path
+# Add the src directory to the Python path
 sys.path.append(os.path.abspath("src"))
 
+# Import the app factory
 from server import create_app
-from server.extensions import db
 
+# Create the Flask app using the factory
 application = create_app()
-app = application  # For compatibility with some servers expecting `app`
 
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        print("PostgreSQL tables created.")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+# Optional alias for local dev (Flask CLI)
+app = application
