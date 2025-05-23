@@ -1,53 +1,69 @@
-import os
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect
+ # src/routes/main_routes.py
 
-# Extensions
-from src.server.extensions import db, login_manager
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
+from flask_login import login_required, current_user
 
-# Corrected Blueprint imports
-from src.routes.main_routes import main as main_bp
-from src.routes.auth_routes import auth_bp
-from src.routes.admin_cases import admin_bp
-from src.routes.doc_routes import doc_bp  # if this is in src/routes/doc_routes.py
+from src.models import Case
+from src.server.case_service import handle_upload, prepare_review_data
+from src.server.services.payment_service import confirm_e_transfer, confirm_paypal_payment
+from src.server.services.doc_service import get_preview_path, get_download_path
 
-csrf = CSRFProtect()
+main = Blueprint("main", __name__)
 
-def create_app():
-    app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
+@main.route("/")
+def home():
+    return render_template("index.html")
 
-    # Configuration
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+@main.route("/dashboard")
+@login_required
+def dashboard():
+    cases = Case.query.filter_by(user_id=current_user.id).all()
+    return render_template("dashboard.html", cases=cases)
 
-    # Initialize extensions
-    db.init_app(app)
-    login_manager.init_app(app)
-    Migrate(app, db)
-    csrf.init_app(app)
+@main.route("/upload", methods=["GET", "POST"])
+@login_required
+def upload():
+    if request.method == "POST":
+        return handle_upload(request, current_user)
 
-    # Register blueprints
-    app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(doc_bp)
+    cases = Case.query.filter_by(user_id=current_user.id).all()
+    return render_template("upload.html", cases=cases)
 
-    # Shell context
-    @app.shell_context_processor
-    def make_shell_context():
-        from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
-        return {
-            "db": db,
-            "User": User,
-            "Case": Case,
-            "Evidence": Evidence,
-            "Payment": Payment,
-            "LegalReference": LegalReference,
-            "FormTemplate": FormTemplate
-        }
+@main.route("/review/<int:case_id>")
+@login_required
+def review_case(case_id):
+    case, form_info, merit_score, explanation, email = prepare_review_data(case_id, current_user)
+    if not case:
+        flash("Access denied.", "danger")
+        return redirect(url_for("main.dashboard"))
 
-    return app
+    return render_template("review_case.html", case=case,
+                           form_info=form_info,
+                           merit_score=merit_score,
+                           explanation=explanation,
+                           ETRANSFER_EMAIL=email)
+
+@main.route("/preview/<int:case_id>")
+@login_required
+def preview_case(case_id):
+    path = get_preview_path(case_id, current_user)
+    return send_file(path, as_attachment=False)
+
+@main.route("/download/<int:case_id>")
+@login_required
+def download_legal_package(case_id):
+    path = get_download_path(case_id, current_user)
+    if not path:
+        flash("Complete payment or subscribe to download.", "warning")
+        return redirect(url_for("main.review_case", case_id=case_id))
+    return send_file(path, as_attachment=True)
+
+@main.route("/confirm-payment/<int:case_id>", methods=["POST"])
+@login_required
+def confirm_payment(case_id):
+    return confirm_e_transfer(case_id, current_user)
+
+@main.route("/paypal-confirm/<int:case_id>", methods=["POST"])
+@login_required
+def paypal_confirm(case_id):
+    return confirm_paypal_payment(request, case_id, current_user)
