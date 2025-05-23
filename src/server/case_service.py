@@ -1,6 +1,6 @@
 from flask import current_app
 from src.server.extensions import db
-from src.server.models import Case
+from src.models import Case  # Fixed import path
 
 def handle_upload(form_data, user_id):
     new_case = Case(
