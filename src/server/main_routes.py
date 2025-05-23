@@ -1,107 +1,53 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
-from flask_login import login_required, current_user
-from src.models import Case, db
-from src.server.case_service import prepare_review_data
-from src.server.services.payment_service import confirm_e_transfer, confirm_paypal_payment
-from src.server.services.doc_service import get_preview_path, get_download_path
-from src.server.merit_weight import score_merit
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 
-main = Blueprint("main", __name__)
+# Extensions
+from src.server.extensions import db, login_manager
 
-@main.route("/")
-def home():
-    return render_template("index.html")
+# Blueprints (Updated imports to avoid circular imports)
+from src.routes.main_routes import main as main_bp
+from src.routes.auth_routes import auth_bp
+from src.routes.admin_cases import admin_bp
+from src.server.doc_routes import doc_bp
 
+csrf = CSRFProtect()
 
-@main.route("/dashboard")
-@login_required
-def dashboard():
-    cases = Case.query.filter_by(user_id=current_user.id).all()
-    return render_template("dashboard.html", cases=cases)
+def create_app():
+    app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
 
+    # Configuration
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-@main.route("/create", methods=["GET", "POST"])
-@login_required
-def create_case():
-    if request.method == "POST":
-        title = request.form.get("title")
-        description = request.form.get("description")
+    # Initialize extensions
+    db.init_app(app)
+    login_manager.init_app(app)
+    Migrate(app, db)
+    csrf.init_app(app)
 
-        if not title or not description:
-            flash("Both title and description are required.", "danger")
-            return redirect(url_for("main.create_case"))
+    # Register blueprints
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(doc_bp)
 
-        # Run AI merit scoring
-        user_province = current_user.province or "ON"
-        result = score_merit(description, issue_category="General", province=user_province)
+    # Shell context for `flask shell`
+    @app.shell_context_processor
+    def make_shell_context():
+        from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
+        return {
+            "db": db,
+            "User": User,
+            "Case": Case,
+            "Evidence": Evidence,
+            "Payment": Payment,
+            "LegalReference": LegalReference,
+            "FormTemplate": FormTemplate
+        }
 
-        new_case = Case(
-            user_id=current_user.id,
-            title=title,
-            description=description,
-            legal_issue=result["precedent_used"],
-            matched_keywords=", ".join(result["reasons"]),
-            confidence_score=result["merit_score"] / 100  # stored as 0.0 - 1.0 float
-        )
-
-        db.session.add(new_case)
-        db.session.commit()
-
-        flash("Case created and analyzed successfully.", "success")
-        return redirect(url_for("main.review_case", case_id=new_case.id))
-
-    return render_template("create_case.html")
-
-
-@main.route("/upload", methods=["GET", "POST"])
-@login_required
-def upload():
-    if request.method == "POST":
-        return handle_upload(request, current_user)
-
-    cases = Case.query.filter_by(user_id=current_user.id).all()
-    return render_template("upload.html", cases=cases)
-
-
-@main.route("/review/<int:case_id>")
-@login_required
-def review_case(case_id):
-    case, form_info, merit_score, explanation, email = prepare_review_data(case_id, current_user)
-    if case is None:
-        flash("Access denied.", "danger")
-        return redirect(url_for("main.dashboard"))
-
-    return render_template("review_case.html", case=case,
-                           form_info=form_info,
-                           merit_score=merit_score,
-                           explanation=explanation,
-                           ETRANSFER_EMAIL=email)
-
-
-@main.route("/preview/<int:case_id>")
-@login_required
-def preview_case(case_id):
-    path = get_preview_path(case_id, current_user)
-    return send_file(path, as_attachment=False)
-
-
-@main.route("/download/<int:case_id>")
-@login_required
-def download_legal_package(case_id):
-    path = get_download_path(case_id, current_user)
-    if not path:
-        flash("Complete payment or subscribe to download.", "warning")
-        return redirect(url_for("main.review_case", case_id=case_id))
-    return send_file(path, as_attachment=True)
-
-
-@main.route("/confirm-payment/<int:case_id>", methods=["POST"])
-@login_required
-def confirm_payment(case_id):
-    return confirm_e_transfer(case_id, current_user)
-
-
-@main.route("/paypal-confirm/<int:case_id>", methods=["POST"])
-@login_required
-def paypal_confirm(case_id):
-    return confirm_paypal_payment(request, case_id, current_user)
+    return app
