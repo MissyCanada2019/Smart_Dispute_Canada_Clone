@@ -1,25 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard | SmartDispute.ai</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>Admin Dashboard</h2>
-      {% if current_user.is_authenticated %}
-        <form method="GET" action="{{ url_for('auth.logout') }}">
-          <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
-        </form>
-      {% endif %}
-    </div>
+<from flask import Blueprint, render_template, redirect, url_for, flash
+from flask_login import login_required, current_user
+from src.models import User, Case
 
-    <!-- Admin tools, user filters, case lists go here -->
+admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@admin_bp.route("/dashboard")
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash("Access denied.", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    users = User.query.all()
+    cases = Case.query.all()
+    return render_template("admin_dashboard.html", users=users, cases=cases)
