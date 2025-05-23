@@ -1,87 +1,20 @@
-{% extends "base.html" %}
-
-{% block title %}Welcome | SmartDispute.ai Canada{% endblock %}
-
-{% block content %}
-<div class="container py-5 text-center">
-    <h1 class="display-4 mb-3">SmartDispute.ai</h1>
-    <p class="lead">Canada’s Justice Engine — Built by experience, powered by AI.</p>
-
-    <div class="d-grid gap-2 col-md-6 mx-auto mt-4">
-        <a href="{{ url_for('register') }}" class="btn btn-danger btn-lg">Start for Free</a>
-        <a href="{{ url_for('about') }}" class="btn btn-outline-light">How It Works</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Dispute Canada</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Smart Dispute Canada</h1>
+        <p>Your online assistant for legal disputes.</p>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.dashboard') }}">Go to Dashboard</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a> or 
+            <a href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
     </div>
-</div>
-
-<!-- Feature Highlights -->
-<div class="container mt-5">
-    <div class="row g-4 text-center">
-        <div class="col-md-4">
-            <div class="bg-dark border border-danger rounded p-4">
-                <h5 class="text-danger">AI Document Upload</h5>
-                <p class="text-muted">Scan and classify legal evidence instantly with OCR & AI.</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="bg-dark border border-danger rounded p-4">
-                <h5 class="text-danger">Merit-Based Scoring</h5>
-                <p class="text-muted">Find out how strong your case is — backed by Canadian case law.</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="bg-dark border border-danger rounded p-4">
-                <h5 class="text-danger">Auto-Generated Legal Forms</h5>
-                <p class="text-muted">Get official court documents tailored to your case and province.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Platform Stats -->
-<div class="container mt-5 text-center">
-    <h2 class="mb-4">By the Numbers</h2>
-    <div class="row justify-content-center">
-        <div class="col-6 col-md-3 mb-3">
-            <h3 class="text-danger">{{ total_users }}</h3>
-            <p class="text-muted small">Registered Users</p>
-        </div>
-        <div class="col-6 col-md-3 mb-3">
-            <h3 class="text-danger">{{ total_cases }}</h3>
-            <p class="text-muted small">Cases Created</p>
-        </div>
-        <div class="col-6 col-md-3 mb-3">
-            <h3 class="text-danger">{{ total_documents }}</h3>
-            <p class="text-muted small">Docs Generated</p>
-        </div>
-        <div class="col-6 col-md-3 mb-3">
-            <h3 class="text-danger">{{ success_rate }}%</h3>
-            <p class="text-muted small">Satisfaction Rate</p>
-        </div>
-    </div>
-</div>
-
-<!-- Testimonials -->
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Real Voices. Real Results.</h2>
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="bg-dark p-4 rounded shadow-sm border border-secondary">
-                <p>"I used SmartDispute to fight an illegal eviction. It created the form I needed and walked me through it."</p>
-                <small class="text-muted">— Amanda T., Ontario</small>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="bg-dark p-4 rounded shadow-sm border border-secondary">
-                <p>"This platform is a game changer for single moms like me. I couldn’t afford legal fees but still won."</p>
-                <small class="text-muted">— Carlos R., Alberta</small>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="bg-dark p-4 rounded shadow-sm border border-secondary">
-                <p>"My human rights form was ready in minutes. No stress, no lawyer, and everything was accurate."</p>
-                <small class="text-muted">— Renee M., Nova Scotia</small>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+</body>
+</html>
