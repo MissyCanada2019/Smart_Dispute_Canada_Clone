@@ -1,9 +1,9 @@
-# src/models/__init__.py
-
-from src.server.extensions import db
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash
 from datetime import datetime
+
+from src.server.extensions import db
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,7 +44,6 @@ class User(UserMixin, db.Model):
             return None
         return email
 
-
 class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -52,13 +51,13 @@ class Case(db.Model):
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_paid = db.Column(db.Boolean, default=False)
+
     legal_issue = db.Column(db.String(100))
     matched_keywords = db.Column(db.Text)
     confidence_score = db.Column(db.Float)
 
     evidence = db.relationship('Evidence', backref='case', lazy=True)
     payments = db.relationship('Payment', backref='case', lazy=True)
-
 
 class Evidence(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -69,18 +68,16 @@ class Evidence(db.Model):
     tag = db.Column(db.String(100))
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey('case.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    amount = db.Column(db.Float, nullable=False, default=9.99)
+    amount = db.Column(db.Float, nullable=False, default=5.99)
     payment_type = db.Column(db.String(50))
     payment_method = db.Column(db.String(50))
     payment_id = db.Column(db.String(150), nullable=True)
     status = db.Column(db.String(50), default="pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 class LegalReference(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -96,7 +93,6 @@ class LegalReference(db.Model):
 
     def __repr__(self):
         return f"<LegalReference {self.title} from {self.source_type}>"
-
 
 class FormTemplate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
