@@ -1,8 +1,9 @@
 from datetime import datetime
 from flask import flash, redirect, url_for, request
-from src.models import db, Payment, Case
+from src.server.extensions import db  # Correct db import
+from src.models import Payment, Case
 from src.server.extensions import send_receipt
-from src.server.payments import verify_paypal_payment
+from src.server.payments import verify_paypal_payment  # Keep only if you're using this script
 
 def confirm_e_transfer(case_id, user):
     case = Case.query.filter_by(id=case_id, user_id=user.id).first()
@@ -10,9 +11,11 @@ def confirm_e_transfer(case_id, user):
         flash("Access denied.", "danger")
         return redirect(url_for("main.dashboard"))
 
+    # Mark case as paid
     case.is_paid = True
     db.session.commit()
 
+    # Log payment
     payment = Payment(
         case_id=case.id,
         user_id=user.id,
