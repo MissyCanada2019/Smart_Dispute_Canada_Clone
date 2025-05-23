@@ -1,8 +1,9 @@
 from flask import current_app
 from src.server.extensions import db
-from src.models import Case  # Fixed import path
 
 def handle_upload(form_data, user_id):
+    from src.models import Case  # Delayed import to avoid circular import
+
     new_case = Case(
         user_id=user_id,
         case_type=form_data.get("case_type"),
@@ -16,6 +17,8 @@ def handle_upload(form_data, user_id):
     return new_case
 
 def prepare_review_data(case_id):
+    from src.models import Case  # Delayed import to avoid circular import
+
     case = Case.query.get(case_id)
     if not case:
         return None
