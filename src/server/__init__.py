@@ -44,22 +44,3 @@ def create_app():
         )
 
     return app
-
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(doc_bp)
-
-    # Flask shell context
-    @app.shell_context_processor
-    def make_shell_context():
-        from src.models import User, Case, Evidence, Payment, LegalReference, FormTemplate
-        return dict(
-            db=db,
-            User=User,
-            Case=Case,
-            Evidence=Evidence,
-            Payment=Payment,
-            LegalReference=LegalReference,
-            FormTemplate=FormTemplate
-        )
-
-    return app
