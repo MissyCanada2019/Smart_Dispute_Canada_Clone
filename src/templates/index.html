@@ -7,18 +7,25 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Smart Dispute Canada</h1>
-        <p>Your online assistant for legal disputes.</p>
-        {% if current_user.is_authenticated %}
-            <a href="{{ url_for('main.dashboard') }}">Go to Dashboard</a>
-        {% else %}
-            <a href="{{ url_for('auth.login') }}">Login</a> or 
-            <a href="{{ url_for('auth.register') }}">Register</a>
-        {% endif %}
-    </div>
-</body>
-</html>
+        <header>
+            <h1>SmartDispute.ai Canada</h1>
+            <p>Canada’s Justice Engine — Built by experience, powered by AI.</p>
+        </header>
 
+        <main>
+            {% if current_user.is_authenticated %}
+                <div class="text-center my-4">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+                </div>
+            {% else %}
+                <div class="text-center my-4">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-success">Login</a>
+                    <span class="mx-2">or</span>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-danger">Register</a>
+                </div>
+            {% endif %}
+
+            <!-- Feature Highlights -->
             <section id="intro">
                 <h2>Why Choose SmartDispute?</h2>
                 <p>Proudly Canadian. 100% self-represented powered. Built by real experience in our justice system.</p>
