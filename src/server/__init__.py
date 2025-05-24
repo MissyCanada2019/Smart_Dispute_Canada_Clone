@@ -14,6 +14,7 @@ from src.server.doc_routes import doc_bp
 
 def create_app():
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
+app.config['DEBUG'] = True  # Enable debug mode
 
     # Config
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
