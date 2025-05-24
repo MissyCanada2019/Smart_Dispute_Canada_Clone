@@ -13,7 +13,7 @@ from src.server.doc_routes import doc_bp
 from src.server.login_setup import load_user  # Import load_user from separate setup file
 
 def create_app():
-    app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
+    app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
