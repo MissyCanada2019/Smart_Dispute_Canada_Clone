@@ -9,7 +9,8 @@ from src.server.extensions import db, login_manager
 from src.routes.main_routes import main as main_bp
 from src.routes.auth_routes import auth_bp
 from src.routes.admin_cases import admin_bp
-from src.server.doc_routes import doc_bp  # Only include if this file exists
+from src.server.doc_routes import doc_bp
+from src.server.login_setup import load_user  # New: pulls in user_loader
 
 csrf = CSRFProtect()
 
@@ -22,10 +23,13 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
-    from src.server import login_setup
-    Migrate(app, db)
     csrf.init_app(app)
+    Migrate(app, db)
 
+    # Register user loader function
+    login_manager.user_loader(load_user)
+
+    # Register routes
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
