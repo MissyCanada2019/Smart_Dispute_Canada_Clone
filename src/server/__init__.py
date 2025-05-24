@@ -5,31 +5,28 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 
-from src.server.extensions import db, login_manager
+from src.server.extensions import db, login_manager, csrf
 from src.routes.main_routes import main as main_bp
 from src.routes.auth_routes import auth_bp
 from src.routes.admin_cases import admin_bp
 from src.server.doc_routes import doc_bp
-from src.server.login_setup import load_user  # New: pulls in user_loader
-
-csrf = CSRFProtect()
+from src.server.login_setup import load_user  # Import load_user from separate setup file
 
 def create_app():
-    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
 
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
+    login_manager.user_loader(load_user)  # Set up user loader separately
     csrf.init_app(app)
     Migrate(app, db)
 
-    # Register user loader function
-    login_manager.user_loader(load_user)
-
-    # Register routes
+    # Register Blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
