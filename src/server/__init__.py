@@ -21,8 +21,7 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
-    login_manager.init_app(app)
-    login_manager.user_loader(load_user)  # Set up user loader separately
+    login_manager.init_app(app)from src.server.login_setup import login_manager# Set up user loader separately
     csrf.init_app(app)
     Migrate(app, db)
 
