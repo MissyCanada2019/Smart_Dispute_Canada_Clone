@@ -1,51 +1,76 @@
-<import os
-import requests
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_wtf import CSRFProtect
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Dispute Canada</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SmartDispute.ai Canada</h1>
+            <p>Canada’s Justice Engine — Built by experience, powered by AI.</p>
+        </header>
 
-# Initialize extensions
-csrf = CSRFProtect()
-db = SQLAlchemy()
-login_manager = LoginManager()
-login_manager.login_view = "auth.login"
+        <main>
+            {% if current_user.is_authenticated %}
+                <div class="text-center my-4">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+                </div>
+            {% else %}
+                <div class="text-center my-4">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-success">Login</a>
+                    <span class="mx-2">or</span>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-danger">Register</a>
+                </div>
+            {% endif %}
 
-# Mailgun configuration
-MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
-MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN")
-MAILGUN_FROM = f"SmartDispute <mailgun@{MAILGUN_DOMAIN}>" if MAILGUN_DOMAIN else None
+            <!-- Feature Highlights -->
+            <section id="intro">
+                <h2>Why Choose SmartDispute?</h2>
+                <p>Proudly Canadian. 100% self-represented powered. Built by real experience in our justice system.</p>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <h5>AI Document Upload</h5>
+                            <p>Scan and classify legal evidence instantly with OCR & AI.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <h5>Merit-Based Scoring</h5>
+                            <p>Find out how strong your case is — backed by Canadian case law.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <h5>Auto-Generated Legal Forms</h5>
+                            <p>Get official court documents tailored to your case and province.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-# Setup Mailgun session
-mailgun = requests.Session()
-if MAILGUN_API_KEY:
-    mailgun.auth = ("api", MAILGUN_API_KEY)
+            <!-- About Section -->
+            <section id="about" class="mt-5">
+                <h2>About the Creator</h2>
+                <p>
+                    SmartDispute.ai Canada was founded by a full-time mother and tireless advocate with first-hand experience fighting for her family's rights within the Canadian legal system. Frustrated by how inaccessible justice can be to everyday people — especially those navigating it alone — she built this platform to level the playing field. Her lived experience fuels every feature of SmartDispute: from AI-powered document scanning to merit-based case scoring to automatic generation of court forms tailored to the right tribunal.
+                </p>
+                <p>
+                    Her goal is simple but ambitious: give power back to the people, starting with knowledge, tools, and access. SmartDispute is more than a web app — it’s a justice engine for self-represented Canadians.
+                </p>
+            </section>
 
-def send_receipt(email, case_title, method):
-    if not MAILGUN_API_KEY or not MAILGUN_DOMAIN:
-        print("Mailgun is not properly configured. Email not sent.")
-        return None
+            <!-- Call to Action -->
+            <div class="text-center my-5">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-danger">Start Your Case</a>
+            </div>
+        </main>
 
-    subject = f"Payment Confirmation for '{case_title}'"
-    body = f"""Hello,
-
-Thank you for your payment via {method}.
-Your legal package for '{case_title}' is now unlocked and available to download.
-
-You can log in anytime to your dashboard to access your case file.
-
-- The SmartDispute Team
-"""
-
-    try:
-        return mailgun.post(
-            f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages",
-            data={
-                "from": MAILGUN_FROM,
-                "to": email,
-                "subject": subject,
-                "text": body
-            }
-        )
-    except Exception as e:
-        print(f"Mailgun error: {e}")
-        return None
+        <footer>
+            <p>&copy; 2025 SmartDispute.ai Canada. All Rights Reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
