@@ -1,3 +1,10 @@
+from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask_login import login_required, current_user
+from src.models import User, Case
+from src.server.extensions import db
+
+admin_bp = Blueprint("admin", __name__)
+
 @admin_bp.route("/admin/dashboard")
 @login_required
 def admin_dashboard():
@@ -21,7 +28,6 @@ def admin_dashboard():
         user_stats.append(stats)
 
     return render_template("admin_dashboard.html", user_stats=user_stats)
-from flask import request
 
 @admin_bp.route("/promote/<int:user_id>", methods=["POST"])
 @login_required
@@ -33,7 +39,7 @@ def promote_user(user_id):
     user = User.query.get_or_404(user_id)
     user.is_admin = True
     db.session.commit()
-    flash(f"{user.full_name} has been promoted to admin.", "success")
+    flash(f"{user.full_name} promoted to admin.", "success")
     return redirect(url_for("admin.admin_dashboard"))
 
 @admin_bp.route("/revoke/<int:user_id>", methods=["POST"])
@@ -63,5 +69,6 @@ def upgrade_user(user_id):
     user = User.query.get_or_404(user_id)
     user.subscription_plan = "unlimited"
     db.session.commit()
-    flash(f"{user.full_name}'s subscription upgraded.", "success")
+    flash(f"{user.full_name}'s plan upgraded to Unlimited.", "success")
     return redirect(url_for("admin.admin_dashboard"))
+"admin.admin_dashboard"))
