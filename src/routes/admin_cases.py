@@ -21,3 +21,47 @@ def admin_dashboard():
         user_stats.append(stats)
 
     return render_template("admin_dashboard.html", user_stats=user_stats)
+from flask import request
+
+@admin_bp.route("/promote/<int:user_id>", methods=["POST"])
+@login_required
+def promote_user(user_id):
+    if not current_user.is_admin:
+        flash("Access denied", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    user = User.query.get_or_404(user_id)
+    user.is_admin = True
+    db.session.commit()
+    flash(f"{user.full_name} has been promoted to admin.", "success")
+    return redirect(url_for("admin.admin_dashboard"))
+
+@admin_bp.route("/revoke/<int:user_id>", methods=["POST"])
+@login_required
+def revoke_admin(user_id):
+    if not current_user.is_admin:
+        flash("Access denied", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("You cannot revoke your own admin status.", "warning")
+        return redirect(url_for("admin.admin_dashboard"))
+
+    user.is_admin = False
+    db.session.commit()
+    flash(f"Admin rights revoked from {user.full_name}.", "info")
+    return redirect(url_for("admin.admin_dashboard"))
+
+@admin_bp.route("/upgrade/<int:user_id>", methods=["POST"])
+@login_required
+def upgrade_user(user_id):
+    if not current_user.is_admin:
+        flash("Access denied", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    user = User.query.get_or_404(user_id)
+    user.subscription_plan = "unlimited"
+    db.session.commit()
+    flash(f"{user.full_name}'s subscription upgraded.", "success")
+    return redirect(url_for("admin.admin_dashboard"))
