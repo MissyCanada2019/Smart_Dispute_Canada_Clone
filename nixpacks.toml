@@ -1,2 +1,15 @@
 [phases.setup]
-nixpkgs = ["zlib", "libjpeg", "freetype"]
+nixpkgs = [
+  "zlib",
+  "libjpeg",
+  "freetype",
+  "pkg-config",
+  "libxml2",
+  "libxslt",
+  "libffi",
+  "openssl",
+  "cairo",
+  "pango",
+  "gdk-pixbuf",
+  "glib"
+]
