@@ -13,9 +13,8 @@ from src.server.doc_routes import doc_bp
 from src.server.login_setup import load_user  # your login loader
 
 def create_app():
-    # Get the absolute path to the directory containing this file
+    # Absolute paths for templates and static folders
     src_dir = os.path.abspath(os.path.dirname(__file__))
-    # Construct the absolute path to the templates directory
     templates_dir = os.path.join(src_dir, '..', 'templates')
     static_dir = os.path.join(src_dir, '..', 'static')
 
