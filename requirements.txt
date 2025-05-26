@@ -16,7 +16,7 @@ beautifulsoup4==4.12.2
 lxml==4.9.3
 openai==1.14.3
 docx2pdf==0.1.8
-weasyprint==59.0
+Werkzeug==2.3.8
 scikit-learn==1.3.2
 psycopg2-binary==2.9.9
 email-validator==1.3.1
