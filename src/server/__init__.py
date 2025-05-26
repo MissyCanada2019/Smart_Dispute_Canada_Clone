@@ -13,7 +13,13 @@ from src.server.doc_routes import doc_bp
 from src.server.login_setup import load_user  # your login loader
 
 def create_app():
-    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    # Get the absolute path to the directory containing this file
+    src_dir = os.path.abspath(os.path.dirname(__file__))
+    # Construct the absolute path to the templates directory
+    templates_dir = os.path.join(src_dir, '..', 'templates')
+    static_dir = os.path.join(src_dir, '..', 'static')
+
+    app = Flask(__name__, template_folder=templates_dir, static_folder=static_dir)
 
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../instance/app.db')
