@@ -1,10 +1,3 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
-from flask_login import login_required, current_user
-from src.models import User, Case
-from src.server.extensions import db
-
-admin_bp = Blueprint("admin", __name__)
-
 @admin_bp.route("/admin/dashboard")
 @login_required
 def admin_dashboard():
@@ -13,5 +6,18 @@ def admin_dashboard():
         return redirect(url_for("main.dashboard"))
 
     users = User.query.all()
-    cases = Case.query.all()
-    return render_template("admin_dashboard.html", users=users, cases=cases)
+    user_stats = []
+
+    for user in users:
+        stats = {
+            "id": user.id,
+            "name": user.full_name,
+            "email": user.email,
+            "subscription": user.subscription_plan or "free",
+            "cases": len(user.cases),
+            "evidence": sum(len(c.evidence_files) for c in user.cases),
+            "admin": user.is_admin
+        }
+        user_stats.append(stats)
+
+    return render_template("admin_dashboard.html", user_stats=user_stats)
