@@ -66,9 +66,16 @@ def upgrade_user(user_id):
         flash("Access denied", "danger")
         return redirect(url_for("main.dashboard"))
 
+   @admin_bp.route("/upgrade/<int:user_id>", methods=["POST"])
+@login_required
+def upgrade_user(user_id):
+    if not current_user.is_admin:
+        flash("Access denied", "danger")
+        return redirect(url_for("main.dashboard"))
+
     user = User.query.get_or_404(user_id)
     user.subscription_plan = "unlimited"
     db.session.commit()
     flash(f"{user.full_name}'s plan upgraded to Unlimited.", "success")
     return redirect(url_for("admin.admin_dashboard"))
-"admin.admin_dashboard")
+
