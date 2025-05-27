@@ -71,4 +71,4 @@ def upgrade_user(user_id):
     db.session.commit()
     flash(f"{user.full_name}'s plan upgraded to Unlimited.", "success")
     return redirect(url_for("admin.admin_dashboard"))
-"admin.admin_dashboard"))
+"admin.admin_dashboard")
